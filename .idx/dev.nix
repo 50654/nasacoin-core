@@ -16,7 +16,7 @@
     pkgs.libevent-dev
     pkgs.libboost-all-dev
     pkgs.libdb-dev
-    pkgs.libdb++-dev
+    pkgs.libdbdev
     pkgs.git
   ];
 
