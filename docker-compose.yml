@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  nasacoin-node:
+    build: .
+    container_name: nasacoin-node
+    ports:
+      - "8334:8334"    # P2P port
+      - "18334:18334"  # RPC port
+    volumes:
+      - nasacoin-data:/home/nasacoin/.nasacoin
+      - ./nasacoin.conf:/home/nasacoin/.nasacoin/nasacoin.conf:ro
+    environment:
+      - NASA_COIN_NETWORK=mainnet
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nasacoin-cli", "getblockchaininfo"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  nasacoin-explorer:
+    build: .
+    container_name: nasacoin-explorer
+    ports:
+      - "3000:3000"
+    volumes:
+      - nasacoin-data:/home/nasacoin/.nasacoin:ro
+    environment:
+      - NASA_COIN_RPC_URL=http://nasacoin-node:18334
+    depends_on:
+      - nasacoin-node
+    restart: unless-stopped
+    command: ["tail", "-f", "/dev/null"]  # Placeholder for explorer
+
+volumes:
+  nasacoin-data:
+    driver: local
