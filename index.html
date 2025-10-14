@@ -1,1 +1,215 @@
-const CONTRACT_ADDRESS = "YOUR_CONTRACT_ADDRESS_HERE";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 NASA Coin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-rocket"></i>
+                    <h1>NASA Coin Dashboard</h1>
+                </div>
+                <div class="connection-status" id="connectionStatus">
+                    <i class="fas fa-circle"></i>
+                    <span>Connecting...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Stats Overview -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Block Height</h3>
+                        <div class="stat-value" id="blockHeight">-</div>
+                        <div class="stat-label">Current Block</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Balance</h3>
+                        <div class="stat-value" id="balance">-</div>
+                        <div class="stat-label">NASAPEPE</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Difficulty</h3>
+                        <div class="stat-value" id="difficulty">-</div>
+                        <div class="stat-label">Current</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Connections</h3>
+                        <div class="stat-value" id="connections">-</div>
+                        <div class="stat-label">Peers</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mining Section -->
+            <section class="mining-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-hammer"></i> Mining Control</h2>
+                    <div class="mining-status" id="miningStatus">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">Stopped</span>
+                    </div>
+                </div>
+                
+                <div class="mining-controls">
+                    <div class="control-group">
+                        <label for="threads">CPU Threads:</label>
+                        <input type="number" id="threads" min="1" max="16" value="1">
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button id="startMining" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Start Mining
+                        </button>
+                        <button id="stopMining" class="btn btn-danger" disabled>
+                            <i class="fas fa-stop"></i> Stop Mining
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mining-stats">
+                    <div class="mining-stat">
+                        <span class="label">Hash Rate:</span>
+                        <span class="value" id="hashRate">0 H/s</span>
+                    </div>
+                    <div class="mining-stat">
+                        <span class="label">Blocks Found:</span>
+                        <span class="value" id="blocksFound">0</span>
+                    </div>
+                    <div class="mining-stat">
+                        <span class="label">Reward:</span>
+                        <span class="value">500,000 NASAPEPE</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Wallet Section -->
+            <section class="wallet-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-wallet"></i> Wallet</h2>
+                </div>
+                
+                <div class="wallet-content">
+                    <div class="wallet-actions">
+                        <button id="generateAddress" class="btn btn-secondary">
+                            <i class="fas fa-plus"></i> Generate Address
+                        </button>
+                        <button id="refreshBalance" class="btn btn-outline">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    
+                    <div class="address-display">
+                        <label>Current Address:</label>
+                        <div class="address-container">
+                            <input type="text" id="currentAddress" readonly>
+                            <button id="copyAddress" class="btn btn-small">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Blockchain Explorer -->
+            <section class="blockchain-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-search"></i> Blockchain Explorer</h2>
+                </div>
+                
+                <div class="explorer-content">
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search by block height, transaction hash, or address...">
+                        <button id="searchBtn" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    
+                    <div class="recent-blocks">
+                        <h3>Recent Blocks</h3>
+                        <div class="blocks-list" id="blocksList">
+                            <!-- Blocks will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Network Information -->
+            <section class="network-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-globe"></i> Network Information</h2>
+                </div>
+                
+                <div class="network-stats">
+                    <div class="network-stat">
+                        <span class="label">Network:</span>
+                        <span class="value">NASA Coin Mainnet</span>
+                    </div>
+                    <div class="network-stat">
+                        <span class="label">Port:</span>
+                        <span class="value">8334</span>
+                    </div>
+                    <div class="network-stat">
+                        <span class="label">RPC Port:</span>
+                        <span class="value">18334</span>
+                    </div>
+                    <div class="network-stat">
+                        <span class="label">Max Supply:</span>
+                        <span class="value">5,000,000 NASAPEPE</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 NASA Coin - To the Moon and Beyond! 🚀🌙</p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-rocket fa-spin"></i>
+            <p>Connecting to NASA Coin...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
