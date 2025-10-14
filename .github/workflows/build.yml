@@ -26,33 +26,48 @@ jobs:
 
       - name: 🔧 Build NASA Coin
         run: |
-          # Check if autogen.sh exists, if not create a basic configure script
+          cd bitcoin-core
+          
+          # Check if Bitcoin source exists
           if [ ! -f "./autogen.sh" ]; then
-            echo "autogen.sh not found, creating basic configure setup"
-            # For now, we'll create a placeholder since the actual Bitcoin source isn't present
-            echo "#!/bin/bash" > autogen.sh
-            echo "echo 'Running autogen.sh...'" >> autogen.sh
-            echo "echo 'This is a placeholder for the actual autogen.sh script'" >> autogen.sh
-            chmod +x autogen.sh
+            echo "❌ Bitcoin source not found in bitcoin-core directory"
+            echo "Please ensure Bitcoin source code is cloned into bitcoin-core/"
+            exit 1
           fi
           
-          if [ ! -f "./configure" ]; then
-            echo "configure not found, creating basic configure script"
-            echo "#!/bin/bash" > configure
-            echo "echo 'Running configure...'" >> configure
-            echo "echo 'This is a placeholder for the actual configure script'" >> configure
-            chmod +x configure
-          fi
+          # Clean previous build
+          make clean || true
           
+          # Generate configure script
           ./autogen.sh
-          ./configure
+          
+          # Configure build with NASA Coin specific options
+          ./configure \
+            --disable-wallet \
+            --disable-gui \
+            --enable-debug \
+            --with-incompatible-bdb \
+            --without-miniupnpc \
+            --without-natpmp \
+            --without-zmq \
+            --without-qrencode
+          
+          # Build with all available cores
           make -j$(nproc)
+          
+          # Verify build
+          if [ ! -f "./src/bitcoind" ] || [ ! -f "./src/bitcoin-cli" ] || [ ! -f "./src/bitcoin-tx" ]; then
+            echo "❌ Build failed - required binaries not found"
+            exit 1
+          fi
+          
+          echo "✅ Build completed successfully"
 
       - name: 📦 Upload binaries (nasacoind & nasacoin-cli)
         uses: actions/upload-artifact@v4
         with:
           name: nasacoin-binaries
           path: |
-            src/nasacoind
-            src/nasacoin-cli
-            src/nasacoin-tx
+            bitcoin-core/src/bitcoind
+            bitcoin-core/src/bitcoin-cli
+            bitcoin-core/src/bitcoin-tx

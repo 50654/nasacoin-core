@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: ⬇️ Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch full history for version detection
 
       - name: ⚙️ Install build dependencies
         run: |
@@ -19,70 +21,240 @@ jobs:
           sudo apt install -y \
             build-essential libtool autotools-dev automake pkg-config \
             libssl-dev libevent-dev bsdmainutils libboost-all-dev \
-            libdb-dev libdb++-dev git fakeroot dpkg-dev
+            libdb-dev libdb++-dev git fakeroot dpkg-dev \
+            libminiupnpc-dev libnatpmp-dev libzmq3-dev \
+            libqrencode-dev libprotobuf-dev protobuf-compiler
+
+      - name: 🔍 Detect version from tag
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION=${VERSION#v}  # Remove 'v' prefix if present
+          else
+            VERSION="1.0.0"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
 
       - name: 🔧 Build NASA Coin
         run: |
-          # Check if autogen.sh exists, if not create a basic configure script
+          cd bitcoin-core
+          
+          # Check if Bitcoin source exists
           if [ ! -f "./autogen.sh" ]; then
-            echo "autogen.sh not found, creating basic configure setup"
-            # For now, we'll create a placeholder since the actual Bitcoin source isn't present
-            echo "#!/bin/bash" > autogen.sh
-            echo "echo 'Running autogen.sh...'" >> autogen.sh
-            echo "echo 'This is a placeholder for the actual autogen.sh script'" >> autogen.sh
-            chmod +x autogen.sh
+            echo "❌ Bitcoin source not found in bitcoin-core directory"
+            echo "Please ensure Bitcoin source code is cloned into bitcoin-core/"
+            exit 1
           fi
           
-          if [ ! -f "./configure" ]; then
-            echo "configure not found, creating basic configure script"
-            echo "#!/bin/bash" > configure
-            echo "echo 'Running configure...'" >> configure
-            echo "echo 'This is a placeholder for the actual configure script'" >> configure
-            chmod +x configure
-          fi
+          # Clean previous build
+          make clean || true
           
+          # Generate configure script
           ./autogen.sh
-          ./configure
+          
+          # Configure build with NASA Coin specific options
+          ./configure \
+            --disable-wallet \
+            --disable-gui \
+            --enable-debug \
+            --with-incompatible-bdb \
+            --without-miniupnpc \
+            --without-natpmp \
+            --without-zmq \
+            --without-qrencode
+          
+          # Build with all available cores
           make -j$(nproc)
+          
+          # Verify build
+          if [ ! -f "./src/bitcoind" ] || [ ! -f "./src/bitcoin-cli" ] || [ ! -f "./src/bitcoin-tx" ]; then
+            echo "❌ Build failed - required binaries not found"
+            exit 1
+          fi
+          
+          echo "✅ Build completed successfully"
 
       - name: 📦 Package binaries
         run: |
-          mkdir -p release/nasacoin
-          cp src/nasacoind src/nasacoin-cli src/nasacoin-tx release/nasacoin/
-          chmod +x release/nasacoin/*
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p release/nasacoin-$VERSION/bin
+          mkdir -p release/nasacoin-$VERSION/share/nasacoin
+          
+          # Copy binaries and rename them
+          cp bitcoin-core/src/bitcoind release/nasacoin-$VERSION/bin/nasacoind
+          cp bitcoin-core/src/bitcoin-cli release/nasacoin-$VERSION/bin/nasacoin-cli
+          cp bitcoin-core/src/bitcoin-tx release/nasacoin-$VERSION/bin/nasacoin-tx
+          
+          # Set executable permissions
+          chmod +x release/nasacoin-$VERSION/bin/*
+          
+          # Create sample configuration file
+          cat > release/nasacoin-$VERSION/share/nasacoin/nasacoin.conf << 'EOF'
+          # NASA Coin Configuration File
+          # 
+          # Network settings
+          testnet=0
+          regtest=0
+          
+          # Connection settings
+          listen=1
+          port=8333
+          
+          # RPC settings
+          server=1
+          rpcuser=nasacoin
+          rpcpassword=your_secure_password_here
+          rpcport=8332
+          
+          # Mining settings (adjust as needed)
+          gen=0
+          
+          # Logging
+          debug=0
+          EOF
+          
+          # Create README
+          cat > release/nasacoin-$VERSION/README.txt << 'EOF'
+          NASA Coin v$VERSION
+          =================
+          
+          This is NASA Coin, a high-reward experimental cryptocurrency forked from Bitcoin.
+          
+          Installation:
+          1. Copy the bin/ directory to your PATH or run from this directory
+          2. Copy nasacoin.conf to ~/.nasacoin/ and customize as needed
+          3. Run: ./nasacoind -daemon
+          4. Use: ./nasacoin-cli getinfo
+          
+          For more information, visit: https://github.com/your-org/nasacoin
+          EOF
+          
+          echo "✅ Binaries packaged successfully"
 
       - name: 📦 Create .tar.gz installer
         run: |
-          tar -czvf release/nasacoin-linux.tar.gz -C release nasacoin
+          VERSION="${{ steps.version.outputs.version }}"
+          cd release
+          tar -czvf nasacoin-$VERSION-linux.tar.gz nasacoin-$VERSION/
+          echo "✅ Created nasacoin-$VERSION-linux.tar.gz"
 
       - name: 📦 Create .deb installer
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          ARCH="amd64"
+          
+          # Create Debian package structure
           mkdir -p nasacoin-deb/DEBIAN
           mkdir -p nasacoin-deb/usr/local/bin
-
-          cp src/nasacoind src/nasacoin-cli src/nasacoin-tx nasacoin-deb/usr/local/bin/
-
-          cat <<EOF > nasacoin-deb/DEBIAN/control
+          mkdir -p nasacoin-deb/usr/share/nasacoin
+          mkdir -p nasacoin-deb/usr/share/doc/nasacoin
+          
+          # Copy binaries
+          cp release/nasacoin-$VERSION/bin/* nasacoin-deb/usr/local/bin/
+          
+          # Copy configuration and documentation
+          cp release/nasacoin-$VERSION/share/nasacoin/* nasacoin-deb/usr/share/nasacoin/
+          cp release/nasacoin-$VERSION/README.txt nasacoin-deb/usr/share/doc/nasacoin/
+          
+          # Create control file
+          cat > nasacoin-deb/DEBIAN/control << EOF
           Package: nasacoin
-          Version: 1.0.0
-          Section: base
+          Version: $VERSION
+          Section: net
           Priority: optional
-          Architecture: amd64
-          Depends: libc6 (>= 2.27)
-          Maintainer: Wesley S. Baker
-          Description: NASA Coin is a high-reward experimental cryptocurrency forked from Bitcoin.
+          Architecture: $ARCH
+          Depends: libc6 (>= 2.27), libssl1.1 (>= 1.1.0), libevent-2.1-6 (>= 2.1.8)
+          Maintainer: Wesley S. Baker <wesley@nasacoin.org>
+          Description: NASA Coin - High-reward experimental cryptocurrency
+           NASA Coin is a high-reward experimental cryptocurrency forked from Bitcoin.
+           This package provides the core daemon (nasacoind), CLI client (nasacoin-cli),
+           and transaction tool (nasacoin-tx).
+           .
+           Features:
+            - High reward mining
+            - Bitcoin-compatible protocol
+            - Command-line interface
+            - Transaction processing
           EOF
-
+          
+          # Create postinst script
+          cat > nasacoin-deb/DEBIAN/postinst << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          # Create nasacoin user if it doesn't exist
+          if ! id nasacoin >/dev/null 2>&1; then
+            useradd --system --home-dir /var/lib/nasacoin --shell /bin/false nasacoin
+          fi
+          
+          # Create data directory
+          mkdir -p /var/lib/nasacoin
+          chown nasacoin:nasacoin /var/lib/nasacoin
+          
+          # Create config directory
+          mkdir -p /etc/nasacoin
+          if [ ! -f /etc/nasacoin/nasacoin.conf ]; then
+            cp /usr/share/nasacoin/nasacoin.conf /etc/nasacoin/
+            chown nasacoin:nasacoin /etc/nasacoin/nasacoin.conf
+            chmod 600 /etc/nasacoin/nasacoin.conf
+          fi
+          
+          echo "NASA Coin installed successfully!"
+          echo "Configuration: /etc/nasacoin/nasacoin.conf"
+          echo "Data directory: /var/lib/nasacoin"
+          echo "Run: nasacoind -daemon"
+          EOF
+          
+          chmod +x nasacoin-deb/DEBIAN/postinst
+          
+          # Build package
           dpkg-deb --build nasacoin-deb
-          mv nasacoin-deb.deb release/nasacoin_1.0.0_amd64.deb
+          mv nasacoin-deb.deb release/nasacoin_${VERSION}_${ARCH}.deb
+          
+          echo "✅ Created nasacoin_${VERSION}_${ARCH}.deb"
 
       - name: 🚀 Create GitHub Release with Installers
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
+          name: NASA Coin ${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 NASA Coin ${{ steps.version.outputs.version }}
+            
+            ### Downloads
+            - **Linux (tar.gz)**: `nasacoin-${{ steps.version.outputs.version }}-linux.tar.gz`
+            - **Debian/Ubuntu (.deb)**: `nasacoin_${{ steps.version.outputs.version }}_amd64.deb`
+            
+            ### Installation
+            
+            **From tar.gz:**
+            ```bash
+            tar -xzf nasacoin-${{ steps.version.outputs.version }}-linux.tar.gz
+            cd nasacoin-${{ steps.version.outputs.version }}
+            ./bin/nasacoind -daemon
+            ```
+            
+            **From .deb package:**
+            ```bash
+            sudo dpkg -i nasacoin_${{ steps.version.outputs.version }}_amd64.deb
+            nasacoind -daemon
+            ```
+            
+            ### What's New
+            - High-reward experimental cryptocurrency
+            - Forked from Bitcoin Core
+            - Command-line interface included
+            - Easy installation packages
+            
+            ### Support
+            - Documentation: [README](https://github.com/${{ github.repository }})
+            - Issues: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
           files: |
-            release/nasacoin-linux.tar.gz
-            release/nasacoin_1.0.0_amd64.deb
+            release/nasacoin-${{ steps.version.outputs.version }}-linux.tar.gz
+            release/nasacoin_${{ steps.version.outputs.version }}_amd64.deb
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
- 
