@@ -44,6 +44,9 @@ class NASACoinDashboard {
             this.tradingFeatures = new TradingFeatures();
         }
         
+        // Initialize enhanced features
+        if (typeof EnhancedFeatures !== 'undefined') {
+            this.enhancedFeatures = new EnhancedFeatures();
         // Initialize analytics dashboard
         if (typeof AnalyticsDashboard !== 'undefined') {
             this.analyticsDashboard = new AnalyticsDashboard();
@@ -209,6 +212,11 @@ class NASACoinDashboard {
             // Start monitoring mining stats
             this.startMiningMonitoring();
             
+            // Start enhanced features mining timer
+            if (this.enhancedFeatures) {
+                this.enhancedFeatures.startMiningTimer();
+            }
+            
         } catch (error) {
             console.error('Failed to start mining:', error);
             this.showToast('Failed to start mining', 'error');
@@ -228,6 +236,11 @@ class NASACoinDashboard {
             if (this.miningInterval) {
                 clearInterval(this.miningInterval);
                 this.miningInterval = null;
+            }
+            
+            // Stop enhanced features mining timer
+            if (this.enhancedFeatures) {
+                this.enhancedFeatures.stopMiningTimer();
             }
             
         } catch (error) {
