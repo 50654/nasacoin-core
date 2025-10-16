@@ -1,4 +1,6 @@
 name: Build NASA Coin
+permissions:
+  contents: read
 
 on:
   push:
