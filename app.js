@@ -13,6 +13,8 @@ class NASACoinDashboard {
         this.walletIntegration = null;
         this.priceTracker = null;
         this.tradingFeatures = null;
+        this.analyticsDashboard = null;
+        this.stakingPool = null;
         
         this.init();
     }
@@ -40,6 +42,16 @@ class NASACoinDashboard {
         // Initialize trading features
         if (typeof TradingFeatures !== 'undefined') {
             this.tradingFeatures = new TradingFeatures();
+        }
+        
+        // Initialize analytics dashboard
+        if (typeof AnalyticsDashboard !== 'undefined') {
+            this.analyticsDashboard = new AnalyticsDashboard();
+        }
+        
+        // Initialize staking pool
+        if (typeof StakingPool !== 'undefined') {
+            this.stakingPool = new StakingPool();
         }
     }
 
