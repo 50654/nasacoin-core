@@ -10,15 +10,31 @@ class NASACoinDashboard {
         this.miningInterval = null;
         this.currentAddress = null;
         this.blocksFound = 0;
+        this.walletIntegration = null;
+        this.priceTracker = null;
         
         this.init();
     }
 
     async init() {
         this.setupEventListeners();
+        this.initializeIntegrations();
         await this.checkConnection();
         this.startPeriodicUpdates();
         this.hideLoadingOverlay();
+    }
+
+    initializeIntegrations() {
+        // Initialize wallet integration
+        if (typeof WalletIntegration !== 'undefined') {
+            this.walletIntegration = new WalletIntegration();
+        }
+        
+        // Initialize price tracker
+        if (typeof PriceTracker !== 'undefined') {
+            this.priceTracker = new PriceTracker();
+            this.priceTracker.init();
+        }
     }
 
     setupEventListeners() {
@@ -27,8 +43,6 @@ class NASACoinDashboard {
         document.getElementById('stopMining').addEventListener('click', () => this.stopMining());
         
         // Wallet controls
-        document.getElementById('generateAddress').addEventListener('click', () => this.generateAddress());
-        document.getElementById('refreshBalance').addEventListener('click', () => this.refreshBalance());
         document.getElementById('copyAddress').addEventListener('click', () => this.copyAddress());
         
         // Blockchain explorer

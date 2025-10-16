@@ -119,27 +119,44 @@
             <section class="wallet-section">
                 <div class="section-header">
                     <h2><i class="fas fa-wallet"></i> Wallet</h2>
+                    <div class="wallet-status disconnected" id="walletStatus">Not Connected</div>
                 </div>
                 
                 <div class="wallet-content">
-                    <div class="wallet-actions">
-                        <button id="generateAddress" class="btn btn-secondary">
-                            <i class="fas fa-plus"></i> Generate Address
+                    <div class="wallet-actions" id="walletActions">
+                        <button id="connectMetaMask" class="btn btn-primary">
+                            <i class="fab fa-ethereum"></i> Connect MetaMask
                         </button>
-                        <button id="refreshBalance" class="btn btn-outline">
-                            <i class="fas fa-sync-alt"></i> Refresh
+                        <button id="connectCoinbase" class="btn btn-secondary">
+                            <i class="fas fa-wallet"></i> Connect Coinbase
                         </button>
                     </div>
                     
                     <div class="address-display">
-                        <label>Current Address:</label>
+                        <label>Wallet Address:</label>
                         <div class="address-container">
-                            <input type="text" id="currentAddress" readonly>
+                            <input type="text" id="walletAddress" readonly>
                             <button id="copyAddress" class="btn btn-small">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
                     </div>
+                    
+                    <div class="wallet-balance">
+                        <label>Wallet Balance:</label>
+                        <div class="balance-display" id="walletBalance">0 NASAPEPE</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Price Tracker Section -->
+            <section class="price-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-line"></i> Market Prices</h2>
+                </div>
+                
+                <div id="priceTracker">
+                    <div class="loading">Loading prices...</div>
                 </div>
             </section>
 
@@ -210,6 +227,9 @@
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Web3 and Wallet SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <script src="wallet-integration.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
