@@ -1,0 +1,50 @@
+{
+  "name": "nasacoin-token-contract",
+  "version": "1.0.0",
+  "description": "NASA Coin ERC-20 Token Smart Contract",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.js --network hardhat",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "deploy:polygon": "hardhat run scripts/deploy.js --network polygon",
+    "deploy:mumbai": "hardhat run scripts/deploy.js --network mumbai",
+    "deploy:bsc": "hardhat run scripts/deploy.js --network bsc",
+    "deploy:bsc-testnet": "hardhat run scripts/deploy.js --network bscTestnet",
+    "verify:sepolia": "hardhat verify --network sepolia",
+    "verify:polygon": "hardhat verify --network polygon",
+    "verify:mumbai": "hardhat verify --network mumbai",
+    "verify:bsc": "hardhat verify --network bsc",
+    "node": "hardhat node",
+    "clean": "hardhat clean",
+    "size": "hardhat size-contracts",
+    "coverage": "hardhat coverage"
+  },
+  "keywords": [
+    "nasa",
+    "coin",
+    "cryptocurrency",
+    "erc20",
+    "token",
+    "blockchain",
+    "defi"
+  ],
+  "author": "NASA Coin Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.2",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "hardhat": "^2.17.1",
+    "hardhat-contract-sizer": "^2.10.0",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.4"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.3",
+    "dotenv": "^16.3.1"
+  },
+  "directories": {
+    "test": "test"
+  }
+}

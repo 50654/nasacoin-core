@@ -7,6 +7,10 @@ const CONFIG = {
     RPC_USER: 'nasauser',
     RPC_PASSWORD: 'supersecurepassword',
     
+    // Smart Contract Settings (will be updated after deployment)
+    CONTRACT_ADDRESS: '0x...', // Update after deployment
+    CHAIN_ID: 11155111, // Sepolia testnet
+    
     // Update Intervals (in milliseconds)
     DASHBOARD_UPDATE_INTERVAL: 10000,  // 10 seconds
     MINING_MONITOR_INTERVAL: 5000,     // 5 seconds
