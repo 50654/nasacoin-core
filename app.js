@@ -12,6 +12,7 @@ class NASACoinDashboard {
         this.blocksFound = 0;
         this.walletIntegration = null;
         this.priceTracker = null;
+        this.tradingFeatures = null;
         
         this.init();
     }
@@ -34,6 +35,11 @@ class NASACoinDashboard {
         if (typeof PriceTracker !== 'undefined') {
             this.priceTracker = new PriceTracker();
             this.priceTracker.init();
+        }
+        
+        // Initialize trading features
+        if (typeof TradingFeatures !== 'undefined') {
+            this.tradingFeatures = new TradingFeatures();
         }
     }
 
