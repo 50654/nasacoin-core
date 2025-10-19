@@ -1,6 +1,6 @@
 # 🚀 NASA Coin ERC-20 Token Contract
 
-A feature-rich ERC-20 token contract with mining, staking, and advanced tokenomics for the NASA Coin ecosystem.
+NASA Coin (NASAPEPE) is an ERC-20 token with a 5,000,000 max supply, burnable and pausable controls, simplified PoW-style mining rewards, and on-chain staking with a default 10% APY (configurable by the owner), plus protections via Ownable and ReentrancyGuard.
 
 ## 🌟 Features
 
