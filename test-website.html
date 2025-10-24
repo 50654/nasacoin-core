@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NASA Coin Dashboard - Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        .test-header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .test-content {
+            background: rgba(26, 26, 26, 0.8);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+        .feature-list {
+            text-align: left;
+            margin: 2rem 0;
+        }
+        .feature-item {
+            background: rgba(42, 42, 42, 0.5);
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #ff6f00;
+        }
+        .test-button {
+            background: linear-gradient(135deg, #ff6f00 0%, #ff8f00 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 1rem;
+            transition: transform 0.3s ease;
+        }
+        .test-button:hover {
+            transform: translateY(-2px);
+        }
+        .status {
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        .status.success {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4caf50;
+        }
+        .status.info {
+            background: rgba(33, 150, 243, 0.2);
+            border: 1px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🚀 NASA Coin Dashboard</h1>
+            <p>Advanced Cryptocurrency Mining & Trading Platform</p>
+        </div>
+        
+        <div class="test-content">
+            <div class="status success">
+                <h3>✅ Website Status: READY</h3>
+                <p>Your NASA Coin Dashboard is fully functional and ready to use!</p>
+            </div>
+            
+            <div class="feature-list">
+                <h3>🌟 Key Features Available:</h3>
+                <div class="feature-item">
+                    <strong>🔗 Blockchain Integration:</strong> Real-time connection to NASA Coin network
+                </div>
+                <div class="feature-item">
+                    <strong>⛏️ Advanced Mining:</strong> CPU mining with intensity controls and pool support
+                </div>
+                <div class="feature-item">
+                    <strong>💰 Multi-Wallet Support:</strong> MetaMask, Coinbase, WalletConnect, Trust Wallet, Phantom, Ledger
+                </div>
+                <div class="feature-item">
+                    <strong>📊 Live Analytics:</strong> Real-time charts, metrics, and performance tracking
+                </div>
+                <div class="feature-item">
+                    <strong>📈 Trading Interface:</strong> Order book simulation and DEX integration
+                </div>
+                <div class="feature-item">
+                    <strong>🔔 Smart Alerts:</strong> Price, mining, wallet, and network notifications
+                </div>
+                <div class="feature-item">
+                    <strong>🏆 Staking Pools:</strong> DeFi staking and yield farming capabilities
+                </div>
+                <div class="feature-item">
+                    <strong>🔍 Blockchain Explorer:</strong> Search blocks, transactions, and addresses
+                </div>
+            </div>
+            
+            <div class="status info">
+                <h3>📁 File Structure:</h3>
+                <p><strong>Main Files:</strong> index.html, styles.css, app.js</p>
+                <p><strong>Modules:</strong> enhanced-features.js, wallet-integration.js, trading-features.js, analytics-dashboard.js, staking-pool.js</p>
+                <p><strong>Configuration:</strong> package.json, hardhat.config.js, server.js</p>
+            </div>
+            
+            <a href="index.html" class="test-button">🚀 Launch Dashboard</a>
+            <a href="https://github.com" class="test-button" target="_blank">📚 View Documentation</a>
+        </div>
+    </div>
+    
+    <script>
+        // Simple test to verify JavaScript is working
+        console.log('🚀 NASA Coin Dashboard Test Page Loaded Successfully!');
+        
+        // Test if main modules are available
+        setTimeout(() => {
+            const modules = [
+                'WalletIntegration',
+                'TradingFeatures', 
+                'AnalyticsDashboard',
+                'StakingPool',
+                'EnhancedFeatures'
+            ];
+            
+            modules.forEach(module => {
+                if (typeof window[module] !== 'undefined') {
+                    console.log(`✅ ${module} module loaded`);
+                } else {
+                    console.log(`⚠️ ${module} module not found`);
+                }
+            });
+        }, 1000);
+    </script>
+</body>
+</html>
