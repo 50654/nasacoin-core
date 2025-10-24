@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+// Verification plugin is included via @nomicfoundation/hardhat-toolbox
 require("@nomicfoundation/hardhat-verify");
 require("dotenv").config();
 
