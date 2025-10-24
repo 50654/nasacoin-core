@@ -1,8 +1,8 @@
-# Contributor Covenant Code of Conduct
+# NASA Coin Code of Conduct
 
 ## Our Pledge
 
-We as members, contributors, and leaders pledge to make participation in our
+We as members, contributors, and leaders of the NASA Coin project pledge to make participation in our
 community a harassment-free experience for everyone, regardless of age, body
 size, visible or invisible disability, ethnicity, sex characteristics, gender
 identity and expression, level of experience, education, socio-economic status,
@@ -10,7 +10,8 @@ nationality, personal appearance, race, religion, or sexual identity
 and orientation.
 
 We pledge to act and interact in ways that contribute to an open, welcoming,
-diverse, inclusive, and healthy community.
+diverse, inclusive, and healthy community focused on advancing space exploration
+and cryptocurrency innovation.
 
 ## Our Standards
 
@@ -24,6 +25,10 @@ community include:
   and learning from the experience
 * Focusing on what is best not just for us as individuals, but for the
   overall community
+* Sharing knowledge about blockchain technology, space exploration, and cryptocurrency
+* Encouraging newcomers to learn about DeFi, staking, and trading features
+* Maintaining transparency in project development and decision-making
+* Respecting intellectual property and giving proper attribution
 
 Examples of unacceptable behavior include:
 
@@ -35,6 +40,12 @@ Examples of unacceptable behavior include:
   address, without their explicit permission
 * Other conduct which could reasonably be considered inappropriate in a
   professional setting
+* Promoting or engaging in fraudulent cryptocurrency schemes or scams
+* Sharing misleading information about tokenomics, staking rewards, or trading features
+* Attempting to manipulate token prices or engage in market manipulation
+* Sharing private keys, seed phrases, or other sensitive wallet information
+* Spamming the community with irrelevant content or excessive self-promotion
+* Engaging in pump-and-dump schemes or other deceptive trading practices
 
 ## Enforcement Responsibilities
 
@@ -59,8 +70,11 @@ representative at an online or offline event.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported to the community leaders responsible for enforcement at
-.
+reported to the community leaders responsible for enforcement at:
+- Email: conduct@nasacoin.org
+- GitHub Issues: Create a private issue with the "conduct" label
+- Discord: Contact moderators directly via DM
+
 All complaints will be reviewed and investigated promptly and fairly.
 
 All community leaders are obligated to respect the privacy and security of the
@@ -111,6 +125,25 @@ individual, or aggression toward or disparagement of classes of individuals.
 
 **Consequence**: A permanent ban from any sort of public interaction within
 the community.
+
+## NASA Coin Specific Guidelines
+
+### Trading and Investment
+- No financial advice: Community members should not provide specific investment advice
+- Risk disclosure: Always remind others that cryptocurrency investments carry risk
+- Educational focus: Prioritize learning and understanding over profit maximization
+
+### Technical Contributions
+- Security first: All code contributions must prioritize security and user safety
+- Documentation: Provide clear documentation for all features and changes
+- Testing: Include appropriate tests for all new functionality
+- Review process: All code changes must go through peer review
+
+### Community Engagement
+- Educational content: Share resources about blockchain technology and space exploration
+- Constructive feedback: Provide helpful suggestions for project improvements
+- Mentorship: Help newcomers understand cryptocurrency and DeFi concepts
+- Respectful debate: Engage in technical discussions with civility and respect
 
 ## Attribution
 
