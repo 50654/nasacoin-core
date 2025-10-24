@@ -6,7 +6,46 @@ on:
       - 'v*.*.*'  # Triggers on tags like v1.0.0
 
 jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: |
+          npm ci
+
+      - name: 🧪 Run Smart Contract Tests
+        run: |
+          npm test
+
+      - name: 🔍 Security Audit
+        run: |
+          npm audit --audit-level moderate
+
+      - name: 🏗️ Build Dashboard
+        run: |
+          npm run build:dashboard
+
+      - name: 📦 Upload Test Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            dist/
+            artifacts/
+
   build:
+    needs: test-and-build
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -25,7 +64,25 @@ jobs:
             libssl-dev libevent-dev bsdmainutils libboost-all-dev \
             libdb-dev libdb++-dev git fakeroot dpkg-dev \
             libminiupnpc-dev libnatpmp-dev libzmq3-dev \
-            libqrencode-dev libprotobuf-dev protobuf-compiler
+            libqrencode-dev libprotobuf-dev protobuf-compiler \
+            nodejs npm curl
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 📦 Download Test Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: test-results
+          path: .
+
+      - name: 📦 Install Node.js dependencies
+        run: |
+          npm ci
+          npm run compile
 
       - name: 🔍 Detect version from tag
         id: version
@@ -39,7 +96,19 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Detected version: $VERSION"
 
-      - name: 🔧 Build NASA Coin
+      - name: 🧪 Run Smart Contract Tests
+        run: |
+          echo "Running NASA Coin smart contract tests..."
+          npm test
+          echo "✅ Smart contract tests passed"
+
+      - name: 🏗️ Build Dashboard
+        run: |
+          echo "Building NASA Coin dashboard..."
+          npm run build:dashboard
+          echo "✅ Dashboard build completed"
+
+      - name: 🔧 Build NASA Coin Core
         run: |
           cd bitcoin-core
           
@@ -76,23 +145,46 @@ jobs:
             exit 1
           fi
           
-          echo "✅ Build completed successfully"
+          echo "✅ NASA Coin Core build completed successfully"
 
-      - name: 📦 Package binaries
+      - name: 🐳 Build Docker Image
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "Building Docker image for NASA Coin v$VERSION..."
+          
+          # Build Docker image
+          docker build -t nasacoin:$VERSION .
+          docker tag nasacoin:$VERSION nasacoin:latest
+          
+          # Save Docker image as tar
+          docker save nasacoin:$VERSION | gzip > release/nasacoin-$VERSION-docker.tar.gz
+          
+          echo "✅ Docker image built successfully"
+
+      - name: 📦 Package Release Artifacts
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           mkdir -p release/nasacoin-$VERSION/bin
           mkdir -p release/nasacoin-$VERSION/share/nasacoin
+          mkdir -p release/nasacoin-$VERSION/dashboard
+          mkdir -p release/nasacoin-$VERSION/contracts
           
-          # Copy binaries and rename them
+          # Copy core binaries and rename them
           cp bitcoin-core/src/bitcoind release/nasacoin-$VERSION/bin/nasacoind
           cp bitcoin-core/src/bitcoin-cli release/nasacoin-$VERSION/bin/nasacoin-cli
           cp bitcoin-core/src/bitcoin-tx release/nasacoin-$VERSION/bin/nasacoin-tx
           
+          # Copy dashboard files
+          cp -r dist/* release/nasacoin-$VERSION/dashboard/
+          
+          # Copy smart contract artifacts
+          cp -r artifacts/ release/nasacoin-$VERSION/contracts/
+          cp contracts/NASACoin.sol release/nasacoin-$VERSION/contracts/
+          
           # Set executable permissions
           chmod +x release/nasacoin-$VERSION/bin/*
           
-          # Create sample configuration file
+          # Create comprehensive configuration file
           cat > release/nasacoin-$VERSION/share/nasacoin/nasacoin.conf << 'EOF'
           # NASA Coin Configuration File
           # 
@@ -117,23 +209,42 @@ jobs:
           debug=0
           EOF
           
-          # Create README
+          # Create comprehensive README
           cat > release/nasacoin-$VERSION/README.txt << 'EOF'
           NASA Coin v$VERSION
           =================
           
-          This is NASA Coin, a high-reward experimental cryptocurrency forked from Bitcoin.
+          This is NASA Coin, a comprehensive cryptocurrency ecosystem including:
+          - High-reward experimental cryptocurrency (Bitcoin fork)
+          - ERC-20 smart contract on Ethereum
+          - Web dashboard for management
+          - Docker containerization
+          
+          Components:
+          - bin/: Core daemon and CLI tools
+          - dashboard/: Web interface
+          - contracts/: Smart contract artifacts
+          - share/nasacoin/: Configuration files
           
           Installation:
           1. Copy the bin/ directory to your PATH or run from this directory
           2. Copy nasacoin.conf to ~/.nasacoin/ and customize as needed
           3. Run: ./nasacoind -daemon
           4. Use: ./nasacoin-cli getinfo
+          5. Open dashboard/index.html in your browser
+          
+          Docker:
+          - Load: docker load < nasacoin-$VERSION-docker.tar.gz
+          - Run: docker run -d nasacoin:$VERSION
+          
+          Smart Contract:
+          - Deploy using artifacts in contracts/ directory
+          - Use with MetaMask or other Web3 wallets
           
           For more information, visit: https://github.com/your-org/nasacoin
           EOF
           
-          echo "✅ Binaries packaged successfully"
+          echo "✅ Release artifacts packaged successfully"
 
       - name: 📦 Create .tar.gz installer
         run: |
@@ -141,6 +252,10 @@ jobs:
           cd release
           tar -czvf nasacoin-$VERSION-linux.tar.gz nasacoin-$VERSION/
           echo "✅ Created nasacoin-$VERSION-linux.tar.gz"
+          
+          # Create separate dashboard package
+          tar -czvf nasacoin-dashboard-$VERSION.tar.gz nasacoin-$VERSION/dashboard/
+          echo "✅ Created nasacoin-dashboard-$VERSION.tar.gz"
 
       - name: 📦 Create .deb installer
         run: |
@@ -226,16 +341,25 @@ jobs:
             ## 🚀 NASA Coin ${{ steps.version.outputs.version }}
             
             ### Downloads
-            - **Linux (tar.gz)**: `nasacoin-${{ steps.version.outputs.version }}-linux.tar.gz`
+            - **Complete Package (tar.gz)**: `nasacoin-${{ steps.version.outputs.version }}-linux.tar.gz`
+            - **Dashboard Only**: `nasacoin-dashboard-${{ steps.version.outputs.version }}.tar.gz`
+            - **Docker Image**: `nasacoin-${{ steps.version.outputs.version }}-docker.tar.gz`
             - **Debian/Ubuntu (.deb)**: `nasacoin_${{ steps.version.outputs.version }}_amd64.deb`
             
             ### Installation
             
-            **From tar.gz:**
+            **Complete Package:**
             ```bash
             tar -xzf nasacoin-${{ steps.version.outputs.version }}-linux.tar.gz
             cd nasacoin-${{ steps.version.outputs.version }}
             ./bin/nasacoind -daemon
+            # Open dashboard/index.html in your browser
+            ```
+            
+            **Docker:**
+            ```bash
+            docker load < nasacoin-${{ steps.version.outputs.version }}-docker.tar.gz
+            docker run -d -p 8333:8333 -p 18334:18334 nasacoin:${{ steps.version.outputs.version }}
             ```
             
             **From .deb package:**
@@ -245,18 +369,153 @@ jobs:
             ```
             
             ### What's New
-            - High-reward experimental cryptocurrency
-            - Forked from Bitcoin Core
+            - High-reward experimental cryptocurrency (Bitcoin fork)
+            - ERC-20 smart contract on Ethereum
+            - Web dashboard for management
+            - Docker containerization
             - Command-line interface included
             - Easy installation packages
+            
+            ### Components
+            - **Core**: Bitcoin-based cryptocurrency daemon
+            - **Smart Contract**: ERC-20 token on Ethereum
+            - **Dashboard**: Web interface for management
+            - **Docker**: Containerized deployment
             
             ### Support
             - Documentation: [README](https://github.com/${{ github.repository }})
             - Issues: [GitHub Issues](https://github.com/${{ github.repository }}/issues)
           files: |
             release/nasacoin-${{ steps.version.outputs.version }}-linux.tar.gz
+            release/nasacoin-dashboard-${{ steps.version.outputs.version }}.tar.gz
+            release/nasacoin-${{ steps.version.outputs.version }}-docker.tar.gz
             release/nasacoin_${{ steps.version.outputs.version }}_amd64.deb
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-multi-platform:
+    needs: test-and-build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: darwin
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v5
+
+      - name: ⚙️ Install build dependencies (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential libtool autotools-dev automake pkg-config \
+            libssl-dev libevent-dev bsdmainutils libboost-all-dev \
+            libdb-dev libdb++-dev git
+
+      - name: ⚙️ Install build dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install autoconf automake libtool pkg-config \
+            boost libevent openssl berkeley-db4
+
+      - name: ⚙️ Install build dependencies (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install -y mingw make
+
+      - name: 🔧 Build NASA Coin Core
+        run: |
+          cd bitcoin-core
+          
+          if [ ! -f "./autogen.sh" ]; then
+            echo "❌ Bitcoin source not found"
+            exit 1
+          fi
+          
+          make clean || true
+          ./autogen.sh
+          
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            ./configure --disable-wallet --disable-gui
+          else
+            ./configure --disable-wallet --disable-gui --without-miniupnpc --without-natpmp
+          fi
+          
+          make -j$(nproc)
+
+      - name: 📦 Package for Platform
+        run: |
+          VERSION="${{ github.ref_name#v }}"
+          PLATFORM="${{ matrix.platform }}"
+          
+          mkdir -p release/nasacoin-$VERSION-$PLATFORM/bin
+          
+          if [ "$PLATFORM" = "windows" ]; then
+            cp bitcoin-core/src/bitcoind.exe release/nasacoin-$VERSION-$PLATFORM/bin/nasacoind.exe
+            cp bitcoin-core/src/bitcoin-cli.exe release/nasacoin-$VERSION-$PLATFORM/bin/nasacoin-cli.exe
+            cp bitcoin-core/src/bitcoin-tx.exe release/nasacoin-$VERSION-$PLATFORM/bin/nasacoin-tx.exe
+          else
+            cp bitcoin-core/src/bitcoind release/nasacoin-$VERSION-$PLATFORM/bin/nasacoind
+            cp bitcoin-core/src/bitcoin-cli release/nasacoin-$VERSION-$PLATFORM/bin/nasacoin-cli
+            cp bitcoin-core/src/bitcoin-tx release/nasacoin-$VERSION-$PLATFORM/bin/nasacoin-tx
+            chmod +x release/nasacoin-$VERSION-$PLATFORM/bin/*
+          fi
+          
+          cd release
+          if [ "$PLATFORM" = "windows" ]; then
+            powershell Compress-Archive -Path nasacoin-$VERSION-$PLATFORM -DestinationPath nasacoin-$VERSION-$PLATFORM.zip
+          else
+            tar -czvf nasacoin-$VERSION-$PLATFORM.tar.gz nasacoin-$VERSION-$PLATFORM/
+          fi
+
+      - name: 📤 Upload Platform Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nasacoin-${{ matrix.platform }}
+          path: release/
+
+  docker-build:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v5
+
+      - name: 🔍 Detect version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🐳 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐳 Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ steps.version.outputs.version }}
+            ghcr.io/${{ github.repository }}:latest
+          platforms: linux/amd64,linux/arm64
