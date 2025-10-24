@@ -15,7 +15,7 @@ describe("NASACoin", function () {
     // Deploy contract
     const NASACoin = await ethers.getContractFactory("NASACoin");
     nasaCoin = await NASACoin.deploy();
-    await nasaCoin.deployed();
+    await nasaCoin.waitForDeployment();
   });
 
   describe("Deployment", function () {
@@ -34,8 +34,8 @@ describe("NASACoin", function () {
     });
 
     it("Should set the correct constants", async function () {
-      expect(await nasaCoin.MAX_SUPPLY()).to.equal(ethers.utils.parseEther("5000000"));
-      expect(await nasaCoin.BLOCK_REWARD()).to.equal(ethers.utils.parseEther("500000"));
+      expect(await nasaCoin.MAX_SUPPLY()).to.equal(ethers.parseEther("5000000"));
+      expect(await nasaCoin.BLOCK_REWARD()).to.equal(ethers.parseEther("500000"));
     });
   });
 
@@ -49,7 +49,7 @@ describe("NASACoin", function () {
           mined = true;
           
           const balance = await nasaCoin.balanceOf(addr1.address);
-          expect(balance).to.equal(ethers.utils.parseEther("500000"));
+          expect(balance).to.equal(ethers.parseEther("500000"));
         } catch (error) {
           // Continue trying different nonces
         }
@@ -88,11 +88,11 @@ describe("NASACoin", function () {
   describe("Staking", function () {
     beforeEach(async function () {
       // Transfer some tokens to addr1 for testing
-      await nasaCoin.transfer(addr1.address, ethers.utils.parseEther("1000"));
+      await nasaCoin.transfer(addr1.address, ethers.parseEther("1000"));
     });
 
     it("Should allow staking tokens", async function () {
-      const stakeAmount = ethers.utils.parseEther("100");
+      const stakeAmount = ethers.parseEther("100");
       
       await nasaCoin.connect(addr1).stake(stakeAmount);
       
@@ -101,14 +101,14 @@ describe("NASACoin", function () {
     });
 
     it("Should not allow staking more than balance", async function () {
-      const stakeAmount = ethers.utils.parseEther("2000"); // More than balance
+      const stakeAmount = ethers.parseEther("2000"); // More than balance
       
       await expect(nasaCoin.connect(addr1).stake(stakeAmount))
         .to.be.revertedWith("Insufficient balance");
     });
 
     it("Should allow unstaking tokens", async function () {
-      const stakeAmount = ethers.utils.parseEther("100");
+      const stakeAmount = ethers.parseEther("100");
       
       // Stake tokens
       await nasaCoin.connect(addr1).stake(stakeAmount);
@@ -121,7 +121,7 @@ describe("NASACoin", function () {
     });
 
     it("Should calculate staking rewards correctly", async function () {
-      const stakeAmount = ethers.utils.parseEther("100");
+      const stakeAmount = ethers.parseEther("100");
       
       await nasaCoin.connect(addr1).stake(stakeAmount);
       
@@ -136,7 +136,7 @@ describe("NASACoin", function () {
 
   describe("Transfers", function () {
     it("Should transfer tokens between accounts", async function () {
-      const transferAmount = ethers.utils.parseEther("100");
+      const transferAmount = ethers.parseEther("100");
       
       await nasaCoin.transfer(addr1.address, transferAmount);
       
@@ -146,7 +146,7 @@ describe("NASACoin", function () {
 
     it("Should fail if sender doesn't have enough tokens", async function () {
       const initialOwnerBalance = await nasaCoin.balanceOf(owner.address);
-      const transferAmount = initialOwnerBalance.add(1);
+      const transferAmount = initialOwnerBalance + 1n;
       
       await expect(nasaCoin.transfer(addr1.address, transferAmount))
         .to.be.revertedWith("ERC20: transfer amount exceeds balance");
@@ -165,8 +165,8 @@ describe("NASACoin", function () {
     it("Should prevent transfers when paused", async function () {
       await nasaCoin.pause();
       
-      await expect(nasaCoin.transfer(addr1.address, ethers.utils.parseEther("100")))
-        .to.be.revertedWith("Pausable: paused");
+      await expect(nasaCoin.transfer(addr1.address, ethers.parseEther("100")))
+        .to.be.revertedWith("ERC20Pausable: token transfer while paused");
     });
 
     it("Should not allow non-owner to pause", async function () {
@@ -207,7 +207,7 @@ describe("NASACoin", function () {
     it("Should not allow minting beyond max supply", async function () {
       // This test would require minting close to max supply first
       // For now, we just verify the constant is set correctly
-      expect(await nasaCoin.MAX_SUPPLY()).to.equal(ethers.utils.parseEther("5000000"));
+      expect(await nasaCoin.MAX_SUPPLY()).to.equal(ethers.parseEther("5000000"));
     });
   });
 });
