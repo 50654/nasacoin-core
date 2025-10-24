@@ -1,0 +1,75 @@
+# NASA Coin Production Dockerfile
+FROM ubuntu:22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+ENV NASA_COIN_HOME=/home/nasacoin
+ENV NASA_COIN_DATA_DIR=${NASA_COIN_HOME}/.nasacoin
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libtool \
+    autotools-dev \
+    automake \
+    pkg-config \
+    libssl-dev \
+    libevent-dev \
+    bsdmainutils \
+    libboost-all-dev \
+    libdb-dev \
+    libdb++-dev \
+    curl \
+    wget \
+    git \
+    vim \
+    htop \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create nasacoin user
+RUN useradd -m -s /bin/bash nasacoin
+
+# Set working directory
+WORKDIR /opt/nasacoin
+
+# Copy NASA Coin source code
+COPY bitcoin-core/ ./
+
+# Build NASA Coin
+RUN ./autogen.sh && \
+    ./configure \
+    --disable-wallet \
+    --disable-gui \
+    --enable-debug \
+    --with-incompatible-bdb \
+    --without-miniupnpc \
+    --without-natpmp \
+    --without-zmq \
+    --without-qrencode && \
+    make -j$(nproc)
+
+# Install NASA Coin binaries
+RUN cp src/bitcoind /usr/local/bin/nasacoind && \
+    cp src/bitcoin-cli /usr/local/bin/nasacoin-cli && \
+    cp src/bitcoin-tx /usr/local/bin/nasacoin-tx && \
+    cp src/bitcoin-util /usr/local/bin/nasacoin-util
+
+# Create data directory
+RUN mkdir -p ${NASA_COIN_DATA_DIR} && \
+    chown -R nasacoin:nasacoin ${NASA_COIN_DATA_DIR}
+
+# Copy configuration
+COPY nasacoin.conf ${NASA_COIN_DATA_DIR}/
+
+# Switch to nasacoin user
+USER nasacoin
+
+# Expose ports
+EXPOSE 8334 18334
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD nasacoin-cli getblockchaininfo || exit 1
+
+# Start NASA Coin daemon
+CMD ["nasacoind", "-daemon", "-conf=/home/nasacoin/.nasacoin/nasacoin.conf"]

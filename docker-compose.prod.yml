@@ -1,0 +1,225 @@
+version: '3.8'
+
+services:
+  # NASA Coin Node (Bitcoin Fork)
+  nasacoin-node:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: nasacoin-node-prod
+    restart: unless-stopped
+    ports:
+      - "8334:8334"    # P2P port
+      - "18334:18334"  # RPC port
+    volumes:
+      - nasacoin-data:/home/nasacoin/.nasacoin
+      - ./nasacoin.conf:/home/nasacoin/.nasacoin/nasacoin.conf:ro
+      - ./logs:/var/log/nasacoin
+    environment:
+      - NODE_ENV=production
+      - NASA_COIN_NETWORK=mainnet
+    networks:
+      - nasacoin-network
+    healthcheck:
+      test: ["CMD", "nasacoin-cli", "getblockchaininfo"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: nasacoin-postgres-prod
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=nasacoin_prod
+      - POSTGRES_USER=nasacoin
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - nasacoin-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nasacoin"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: nasacoin-redis-prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-data:/data
+    networks:
+      - nasacoin-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # NASA Coin API Server
+  nasacoin-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: nasacoin-api-prod
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://nasacoin:${POSTGRES_PASSWORD}@postgres:5432/nasacoin_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - NASA_COIN_RPC_URL=http://nasacoin-node:18334
+      - NASA_COIN_RPC_USER=${NASA_COIN_RPC_USER}
+      - NASA_COIN_RPC_PASSWORD=${NASA_COIN_RPC_PASSWORD}
+    depends_on:
+      - postgres
+      - redis
+      - nasacoin-node
+    networks:
+      - nasacoin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # NASA Coin Dashboard
+  nasacoin-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: nasacoin-dashboard-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ssl:/etc/ssl/certs
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - nasacoin-api
+    networks:
+      - nasacoin-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nasacoin-prometheus-prod
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - nasacoin-network
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nasacoin-grafana-prod
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - nasacoin-network
+
+  # Log Aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: nasacoin-loki-prod
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./monitoring/loki.yml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - nasacoin-network
+
+  # Log Shipping
+  promtail:
+    image: grafana/promtail:latest
+    container_name: nasacoin-promtail-prod
+    restart: unless-stopped
+    volumes:
+      - ./logs:/var/log/nasacoin:ro
+      - ./monitoring/promtail.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - nasacoin-network
+
+  # Backup Service
+  backup:
+    image: postgres:15-alpine
+    container_name: nasacoin-backup-prod
+    restart: "no"
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data:ro
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    command: /backup.sh
+    depends_on:
+      - postgres
+    networks:
+      - nasacoin-network
+
+volumes:
+  nasacoin-data:
+    driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  loki-data:
+    driver: local
+
+networks:
+  nasacoin-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
