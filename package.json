@@ -19,7 +19,8 @@
     "node": "hardhat node",
     "clean": "hardhat clean",
     "size": "hardhat size-contracts",
-    "coverage": "hardhat coverage"
+    "coverage": "hardhat coverage",
+    "build:dashboard": "node scripts/build-dashboard.js"
   },
   "keywords": [
     "nasa",

@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 NASA Coin Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-rocket"></i>
+                    <h1>NASA Coin Dashboard</h1>
+                </div>
+                <div class="connection-status" id="connectionStatus">
+                    <i class="fas fa-circle"></i>
+                    <span>Connecting...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <!-- Stats Overview -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Block Height</h3>
+                        <div class="stat-value" id="blockHeight">-</div>
+                        <div class="stat-label">Current Block</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Balance</h3>
+                        <div class="stat-value" id="balance">-</div>
+                        <div class="stat-label">NASAPEPE</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-cube"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Difficulty</h3>
+                        <div class="stat-value" id="difficulty">-</div>
+                        <div class="stat-label">Current</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Connections</h3>
+                        <div class="stat-value" id="connections">-</div>
+                        <div class="stat-label">Peers</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Enhanced Mining Section -->
+            <section class="mining-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-hammer"></i> Advanced Mining Control</h2>
+                    <div class="mining-status" id="miningStatus">
+                        <span class="status-indicator"></span>
+                        <span class="status-text">Stopped</span>
+                    </div>
+                </div>
+                
+                <div class="mining-controls">
+                    <div class="control-group">
+                        <label for="threads">CPU Threads:</label>
+                        <input type="number" id="threads" min="1" max="32" value="1">
+                        <span class="cpu-usage" id="cpuUsage">CPU: 0%</span>
+                    </div>
+                    
+                    <div class="control-group">
+                        <label for="miningIntensity">Mining Intensity:</label>
+                        <select id="miningIntensity">
+                            <option value="low">Low (25%)</option>
+                            <option value="medium" selected>Medium (50%)</option>
+                            <option value="high">High (75%)</option>
+                            <option value="maximum">Maximum (100%)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="control-buttons">
+                        <button id="startMining" class="btn btn-primary">
+                            <i class="fas fa-play"></i> Start Mining
+                        </button>
+                        <button id="stopMining" class="btn btn-danger" disabled>
+                            <i class="fas fa-stop"></i> Stop Mining
+                        </button>
+                        <button id="autoMining" class="btn btn-secondary">
+                            <i class="fas fa-robot"></i> Auto Mode
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mining-stats-grid">
+                    <div class="mining-stat-card">
+                        <div class="stat-icon"><i class="fas fa-tachometer-alt"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Hash Rate</span>
+                            <span class="value" id="hashRate">0 H/s</span>
+                            <span class="trend" id="hashRateTrend">+0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mining-stat-card">
+                        <div class="stat-icon"><i class="fas fa-cube"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Blocks Found</span>
+                            <span class="value" id="blocksFound">0</span>
+                            <span class="trend" id="blocksTrend">Today: 0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mining-stat-card">
+                        <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Total Rewards</span>
+                            <span class="value" id="totalRewards">0 NASAPEPE</span>
+                            <span class="trend" id="rewardsTrend">≈ $0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mining-stat-card">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Mining Time</span>
+                            <span class="value" id="miningTime">00:00:00</span>
+                            <span class="trend" id="uptimeTrend">Uptime</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mining-stat-card">
+                        <div class="stat-icon"><i class="fas fa-thermometer-half"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Efficiency</span>
+                            <span class="value" id="miningEfficiency">0%</span>
+                            <span class="trend" id="efficiencyTrend">Optimal</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mining-stat-card">
+                        <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="stat-info">
+                            <span class="label">Avg Block Time</span>
+                            <span class="value" id="avgBlockTime">10m</span>
+                            <span class="trend" id="blockTimeTrend">Target: 10m</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mining Performance Chart -->
+                <div class="mining-chart-container">
+                    <h3><i class="fas fa-chart-area"></i> Mining Performance</h3>
+                    <div class="chart-controls">
+                        <button class="chart-btn active" data-period="1h">1H</button>
+                        <button class="chart-btn" data-period="6h">6H</button>
+                        <button class="chart-btn" data-period="24h">24H</button>
+                        <button class="chart-btn" data-period="7d">7D</button>
+                    </div>
+                    <canvas id="miningChart" width="800" height="300"></canvas>
+                </div>
+
+                <!-- Mining Pool Integration -->
+                <div class="pool-section">
+                    <h3><i class="fas fa-users"></i> Pool Mining</h3>
+                    <div class="pool-controls">
+                        <div class="pool-selector">
+                            <label for="miningPool">Select Pool:</label>
+                            <select id="miningPool">
+                                <option value="solo">Solo Mining</option>
+                                <option value="nasapool">NASA Pool (Official)</option>
+                                <option value="spacepool">Space Pool</option>
+                                <option value="custom">Custom Pool</option>
+                            </select>
+                        </div>
+                        <div class="pool-stats" id="poolStats">
+                            <span class="pool-stat">Pool Hash Rate: <strong id="poolHashRate">-</strong></span>
+                            <span class="pool-stat">Pool Workers: <strong id="poolWorkers">-</strong></span>
+                            <span class="pool-stat">Your Share: <strong id="yourShare">0%</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Enhanced Wallet Section -->
+            <section class="wallet-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-wallet"></i> Multi-Wallet Integration</h2>
+                    <div class="wallet-status disconnected" id="walletStatus">Not Connected</div>
+                </div>
+                
+                <div class="wallet-content">
+                    <div class="wallet-providers">
+                        <h3><i class="fas fa-plug"></i> Connect Wallet</h3>
+                        <div class="wallet-grid">
+                            <button id="connectMetaMask" class="wallet-btn">
+                                <div class="wallet-icon"><i class="fab fa-ethereum"></i></div>
+                                <div class="wallet-info">
+                                    <span class="wallet-name">MetaMask</span>
+                                    <span class="wallet-desc">Browser Extension</span>
+                                </div>
+                            </button>
+                            
+                            <button id="connectCoinbase" class="wallet-btn">
+                                <div class="wallet-icon"><i class="fas fa-wallet"></i></div>
+                                <div class="wallet-info">
+                                    <span class="wallet-name">Coinbase</span>
+                                    <span class="wallet-desc">Coinbase Wallet</span>
+                                </div>
+                            </button>
+                            
+                            <button id="connectWalletConnect" class="wallet-btn">
+                                <div class="wallet-icon"><i class="fas fa-link"></i></div>
+                                <div class="wallet-info">
+                                    <span class="wallet-name">WalletConnect</span>
+                                    <span class="wallet-desc">Mobile Wallets</span>
+                                </div>
+                            </button>
+                            
+                            <button id="connectTrustWallet" class="wallet-btn">
+                                <div class="wallet-icon"><i class="fas fa-shield-alt"></i></div>
+                                <div class="wallet-info">
+                                    <span class="wallet-name">Trust Wallet</span>
+                                    <span class="wallet-desc">Mobile & Desktop</span>
+                                </div>
+                            </button>
+                            
+                            <button id="connectPhantom" class="wallet-btn">
+                                <div class="wallet-icon"><i class="fas fa-ghost"></i></div>
+                                <div class="wallet-info">
+                                    <span class="wallet-name">Phantom</span>
+                                    <span class="wallet-desc">Solana & Multi-chain</span>
+                                </div>
+                            </button>
+                            
+                            <button id="connectLedger" class="wallet-btn">
+                                <div class="wallet-icon"><i class="fas fa-usb"></i></div>
+                                <div class="wallet-info">
+                                    <span class="wallet-name">Ledger</span>
+                                    <span class="wallet-desc">Hardware Wallet</span>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="wallet-details" id="walletDetails" style="display: none;">
+                        <div class="wallet-info-grid">
+                            <div class="wallet-info-card">
+                                <div class="info-header">
+                                    <i class="fas fa-address-card"></i>
+                                    <span>Wallet Address</span>
+                                </div>
+                                <div class="address-container">
+                                    <input type="text" id="walletAddress" readonly>
+                                    <button id="copyAddress" class="btn btn-small">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <button id="qrCode" class="btn btn-small">
+                                        <i class="fas fa-qrcode"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="wallet-info-card">
+                                <div class="info-header">
+                                    <i class="fas fa-coins"></i>
+                                    <span>Balance Overview</span>
+                                </div>
+                                <div class="balance-grid">
+                                    <div class="balance-item">
+                                        <span class="balance-label">NASAPEPE</span>
+                                        <span class="balance-value" id="nasapepeBalance">0</span>
+                                        <span class="balance-usd" id="nasapepeUSD">$0.00</span>
+                                    </div>
+                                    <div class="balance-item">
+                                        <span class="balance-label">ETH</span>
+                                        <span class="balance-value" id="ethBalance">0</span>
+                                        <span class="balance-usd" id="ethUSD">$0.00</span>
+                                    </div>
+                                    <div class="balance-item">
+                                        <span class="balance-label">Total USD</span>
+                                        <span class="balance-value" id="totalUSD">$0.00</span>
+                                        <span class="balance-change" id="totalChange">+0%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="wallet-info-card">
+                                <div class="info-header">
+                                    <i class="fas fa-exchange-alt"></i>
+                                    <span>Quick Actions</span>
+                                </div>
+                                <div class="wallet-actions">
+                                    <button id="sendTokens" class="action-btn">
+                                        <i class="fas fa-paper-plane"></i>
+                                        <span>Send</span>
+                                    </button>
+                                    <button id="receiveTokens" class="action-btn">
+                                        <i class="fas fa-download"></i>
+                                        <span>Receive</span>
+                                    </button>
+                                    <button id="swapTokens" class="action-btn">
+                                        <i class="fas fa-exchange-alt"></i>
+                                        <span>Swap</span>
+                                    </button>
+                                    <button id="stakeTokens" class="action-btn">
+                                        <i class="fas fa-lock"></i>
+                                        <span>Stake</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="wallet-info-card">
+                                <div class="info-header">
+                                    <i class="fas fa-history"></i>
+                                    <span>Recent Transactions</span>
+                                </div>
+                                <div class="transaction-list" id="recentTransactions">
+                                    <div class="no-transactions">No recent transactions</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="wallet-management">
+                            <button id="disconnectWallet" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt"></i> Disconnect Wallet
+                            </button>
+                            <button id="refreshBalance" class="btn btn-secondary">
+                                <i class="fas fa-sync-alt"></i> Refresh Balance
+                            </button>
+                            <button id="exportPrivateKey" class="btn btn-warning">
+                                <i class="fas fa-key"></i> Export Private Key
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Enhanced Price Tracker Section -->
+            <section class="price-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-line"></i> Advanced Market Analytics</h2>
+                    <div class="market-status" id="marketStatus">
+                        <span class="status-indicator live"></span>
+                        <span>Live Data</span>
+                    </div>
+                </div>
+                
+                <div class="price-overview">
+                    <div class="price-card main-price">
+                        <div class="price-header">
+                            <div class="coin-info">
+                                <i class="fas fa-rocket"></i>
+                                <span class="coin-name">NASAPEPE</span>
+                                <span class="coin-symbol">NASAPEPE</span>
+                            </div>
+                            <div class="price-actions">
+                                <button id="addToWatchlist" class="btn btn-small">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button id="priceAlert" class="btn btn-small">
+                                    <i class="fas fa-bell"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="price-data">
+                            <div class="current-price" id="nasapepePrice">$0.000001</div>
+                            <div class="price-change" id="nasapepeChange">+0.00%</div>
+                            <div class="price-change-24h">24h: <span id="change24h">+0.00%</span></div>
+                        </div>
+                        <div class="price-stats">
+                            <div class="stat">
+                                <span class="label">Market Cap</span>
+                                <span class="value" id="marketCap">$0</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Volume 24h</span>
+                                <span class="value" id="volume24h">$0</span>
+                            </div>
+                            <div class="stat">
+                                <span class="label">Circulating Supply</span>
+                                <span class="value" id="circulatingSupply">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-prices">
+                        <div class="price-card">
+                            <div class="coin-header">
+                                <i class="fab fa-bitcoin"></i>
+                                <span>Bitcoin</span>
+                            </div>
+                            <div class="price-info">
+                                <span class="price" id="btcPrice">$0</span>
+                                <span class="change" id="btcChange">+0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="price-card">
+                            <div class="coin-header">
+                                <i class="fab fa-ethereum"></i>
+                                <span>Ethereum</span>
+                            </div>
+                            <div class="price-info">
+                                <span class="price" id="ethPrice">$0</span>
+                                <span class="change" id="ethChange">+0%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="price-card">
+                            <div class="coin-header">
+                                <i class="fas fa-dog"></i>
+                                <span>Dogecoin</span>
+                            </div>
+                            <div class="price-info">
+                                <span class="price" id="dogePrice">$0</span>
+                                <span class="change" id="dogeChange">+0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="price-chart-container">
+                    <div class="chart-header">
+                        <h3>Price Chart</h3>
+                        <div class="chart-controls">
+                            <button class="chart-btn active" data-timeframe="1h">1H</button>
+                            <button class="chart-btn" data-timeframe="4h">4H</button>
+                            <button class="chart-btn" data-timeframe="1d">1D</button>
+                            <button class="chart-btn" data-timeframe="1w">1W</button>
+                            <button class="chart-btn" data-timeframe="1m">1M</button>
+                        </div>
+                    </div>
+                    <canvas id="priceChart" width="800" height="400"></canvas>
+                </div>
+            </section>
+
+            <!-- Alerts & Notifications Section -->
+            <section class="alerts-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-bell"></i> Smart Alerts & Notifications</h2>
+                    <button id="createAlert" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create Alert
+                    </button>
+                </div>
+                
+                <div class="alerts-content">
+                    <div class="alert-types">
+                        <div class="alert-type-card">
+                            <div class="alert-icon"><i class="fas fa-chart-line"></i></div>
+                            <div class="alert-info">
+                                <h4>Price Alerts</h4>
+                                <p>Get notified when NASAPEPE reaches target prices</p>
+                                <div class="alert-count">Active: <span id="priceAlertsCount">0</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-type-card">
+                            <div class="alert-icon"><i class="fas fa-hammer"></i></div>
+                            <div class="alert-info">
+                                <h4>Mining Alerts</h4>
+                                <p>Monitor mining performance and block discoveries</p>
+                                <div class="alert-count">Active: <span id="miningAlertsCount">0</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-type-card">
+                            <div class="alert-icon"><i class="fas fa-wallet"></i></div>
+                            <div class="alert-info">
+                                <h4>Wallet Alerts</h4>
+                                <p>Track balance changes and transactions</p>
+                                <div class="alert-count">Active: <span id="walletAlertsCount">0</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-type-card">
+                            <div class="alert-icon"><i class="fas fa-network-wired"></i></div>
+                            <div class="alert-info">
+                                <h4>Network Alerts</h4>
+                                <p>Stay informed about network status changes</p>
+                                <div class="alert-count">Active: <span id="networkAlertsCount">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="active-alerts">
+                        <h3>Active Alerts</h3>
+                        <div class="alerts-list" id="alertsList">
+                            <div class="no-alerts">No active alerts. Create your first alert above!</div>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-history">
+                        <h3>Recent Notifications</h3>
+                        <div class="notifications-list" id="notificationsList">
+                            <div class="notification-item">
+                                <div class="notification-icon"><i class="fas fa-info-circle"></i></div>
+                                <div class="notification-content">
+                                    <div class="notification-title">Welcome to NASA Coin Dashboard!</div>
+                                    <div class="notification-time">Just now</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Blockchain Explorer -->
+            <section class="blockchain-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-search"></i> Blockchain Explorer</h2>
+                </div>
+                
+                <div class="explorer-content">
+                    <div class="search-bar">
+                        <input type="text" id="searchInput" placeholder="Search by block height, transaction hash, or address...">
+                        <button id="searchBtn" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </div>
+                    
+                    <div class="recent-blocks">
+                        <h3>Recent Blocks</h3>
+                        <div class="blocks-list" id="blocksList">
+                            <!-- Blocks will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Network Information -->
+            <section class="network-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-globe"></i> Network Information</h2>
+                </div>
+                
+                <div class="network-stats">
+                    <div class="network-stat">
+                        <span class="label">Network:</span>
+                        <span class="value">NASA Coin Mainnet</span>
+                    </div>
+                    <div class="network-stat">
+                        <span class="label">Port:</span>
+                        <span class="value">8334</span>
+                    </div>
+                    <div class="network-stat">
+                        <span class="label">RPC Port:</span>
+                        <span class="value">18334</span>
+                    </div>
+                    <div class="network-stat">
+                        <span class="label">Max Supply:</span>
+                        <span class="value">5,000,000 NASAPEPE</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2024 NASA Coin - To the Moon and Beyond! 🚀🌙</p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-rocket fa-spin"></i>
+            <p>Connecting to NASA Coin...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Chart.js for Advanced Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    
+    <!-- QR Code Generator -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <!-- Web3 and Wallet SDKs -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.8.0/dist/umd/index.min.js"></script>
+    
+    <!-- Enhanced Application Scripts -->
+    <script src="wallet-integration.js"></script>
+    <script src="trading-features.js"></script>
+    <script src="enhanced-features.js"></script>
+    <script src="analytics-dashboard.js"></script>
+    <script src="staking-pool.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
