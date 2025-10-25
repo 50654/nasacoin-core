@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { Pool } = require('pg');
 const Redis = require('ioredis');
+const crypto = require('crypto');
 const { ethers } = require('ethers');
 const winston = require('winston');
 const Sentry = require('@sentry/node');
@@ -108,6 +109,168 @@ app.use((req, res, next) => {
     timestamp: new Date().toISOString()
   });
   next();
+});
+
+// Register PoW-Wow middleware (no-op if disabled)
+app.use(powWowMiddleware);
+
+// ----------------------------------------------
+// PoW-Wow Security: Challenge/Response Middleware
+// ----------------------------------------------
+const powWowConfig = {
+  enabled: (process.env.POWWOW_ENABLED || 'false').toLowerCase() === 'true',
+  difficulty: parseInt(process.env.POWWOW_DIFFICULTY || '18', 10), // leading bits target
+  challengeTtlSeconds: parseInt(process.env.POWWOW_CHALLENGE_TTL || '60', 10),
+  tokenTtlSeconds: parseInt(process.env.POWWOW_TOKEN_TTL || '120', 10),
+  headerName: process.env.POWWOW_HEADER_NAME || 'X-PoW-Token',
+  protectedPaths: (process.env.POWWOW_PROTECTED_PATHS || '/api/nasacoin').split(',').map(p => p.trim()).filter(Boolean)
+};
+
+function computeSha256Hex(input) {
+  return crypto.createHash('sha256').update(input).digest('hex');
+}
+
+function getClientIp(req) {
+  // honor reverse proxy if configured; Express default provides req.ip
+  return req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || '0.0.0.0';
+}
+
+function isHashBelowDifficulty(hexDigest, difficultyBits) {
+  // Compare bigint of hash to target = 2^(256-difficulty)
+  const hashValue = BigInt('0x' + hexDigest);
+  const shift = 256 - Math.max(0, Math.min(255, difficultyBits));
+  const target = 1n << BigInt(shift);
+  return hashValue < target;
+}
+
+async function createPowChallenge(resource, ip) {
+  const challengeId = crypto.randomBytes(16).toString('hex');
+  const serverNonce = crypto.randomBytes(16).toString('hex');
+  const timestamp = Date.now();
+  const payload = {
+    id: challengeId,
+    resource,
+    ip,
+    serverNonce,
+    timestamp,
+    difficulty: powWowConfig.difficulty
+  };
+  await redis.setex(`pow:challenge:${challengeId}`, powWowConfig.challengeTtlSeconds, JSON.stringify(payload));
+  return payload;
+}
+
+async function verifyPowSolutionAndMintToken(challengeId, clientNonce, ip) {
+  const key = `pow:challenge:${challengeId}`;
+  const value = await redis.get(key);
+  if (!value) return { ok: false, reason: 'invalid_or_expired_challenge' };
+  const challenge = JSON.parse(value);
+
+  // Bind PoW to the requesting IP and resource
+  if (challenge.ip !== ip) return { ok: false, reason: 'ip_mismatch' };
+
+  const composed = `${challenge.serverNonce}:${clientNonce}:${challenge.timestamp}:${challenge.resource}:${challenge.ip}`;
+  const digest = computeSha256Hex(composed);
+  const ok = isHashBelowDifficulty(digest, challenge.difficulty);
+  if (!ok) return { ok: false, reason: 'insufficient_work' };
+
+  // Invalidate the challenge to prevent replay
+  await redis.del(key);
+
+  // Issue short-lived token bound to resource+ip
+  const token = crypto.randomBytes(24).toString('hex');
+  const tokenData = {
+    token,
+    resource: challenge.resource,
+    ip: challenge.ip,
+    issuedAt: Date.now()
+  };
+  await redis.setex(`pow:token:${token}`, powWowConfig.tokenTtlSeconds, JSON.stringify(tokenData));
+  return { ok: true, token, expiresIn: powWowConfig.tokenTtlSeconds, resource: challenge.resource };
+}
+
+function isProtectedPath(pathname) {
+  // Simple prefix match for configured protected roots
+  return powWowConfig.protectedPaths.some(prefix => pathname.startsWith(prefix));
+}
+
+async function powWowMiddleware(req, res, next) {
+  try {
+    if (!powWowConfig.enabled) return next();
+    if (!isProtectedPath(req.path)) return next();
+
+    const token = req.get(powWowConfig.headerName);
+    if (!token) {
+      // No token; instruct client to fetch a challenge
+      return res.status(403).json({
+        error: 'pow_required',
+        message: 'Proof-of-Work required. Obtain challenge and solve.',
+        challengeEndpoint: '/api/pow/challenge',
+        header: powWowConfig.headerName,
+        difficulty: powWowConfig.difficulty
+      });
+    }
+
+    const tokenPayload = await redis.get(`pow:token:${token}`);
+    if (!tokenPayload) {
+      return res.status(403).json({ error: 'invalid_pow_token' });
+    }
+    const parsed = JSON.parse(tokenPayload);
+    const ip = getClientIp(req);
+    if (parsed.ip !== ip) {
+      return res.status(403).json({ error: 'ip_mismatch' });
+    }
+    // Token must match the protected root (resource prefix)
+    if (!req.path.startsWith(parsed.resource)) {
+      return res.status(403).json({ error: 'resource_mismatch' });
+    }
+
+    return next();
+  } catch (e) {
+    return res.status(500).json({ error: 'pow_verification_failed' });
+  }
+}
+
+// Challenge endpoint
+app.get('/api/pow/challenge', async (req, res) => {
+  try {
+    if (!powWowConfig.enabled) return res.status(404).json({ error: 'not_enabled' });
+    const resource = (req.query.resource || '/').toString();
+    if (!isProtectedPath(resource)) {
+      return res.status(400).json({ error: 'invalid_resource' });
+    }
+    const ip = getClientIp(req);
+    const challenge = await createPowChallenge(resource, ip);
+    res.json({
+      challengeId: challenge.id,
+      resource: challenge.resource,
+      difficulty: challenge.difficulty,
+      serverNonce: challenge.serverNonce,
+      timestamp: challenge.timestamp,
+      ttl: powWowConfig.challengeTtlSeconds,
+      algorithm: 'sha256',
+    });
+  } catch (error) {
+    logger.error('PoW challenge error', error);
+    res.status(500).json({ error: 'challenge_failed' });
+  }
+});
+
+// Solve endpoint
+app.post('/api/pow/solve', async (req, res) => {
+  try {
+    if (!powWowConfig.enabled) return res.status(404).json({ error: 'not_enabled' });
+    const { challengeId, clientNonce } = req.body || {};
+    if (!challengeId || typeof clientNonce !== 'string') {
+      return res.status(400).json({ error: 'invalid_request' });
+    }
+    const ip = getClientIp(req);
+    const result = await verifyPowSolutionAndMintToken(challengeId, clientNonce, ip);
+    if (!result.ok) return res.status(400).json({ error: result.reason });
+    res.json({ token: result.token, header: powWowConfig.headerName, expiresIn: result.expiresIn, resource: result.resource });
+  } catch (error) {
+    logger.error('PoW solve error', error);
+    res.status(500).json({ error: 'solve_failed' });
+  }
 });
 
 // Health check endpoint
