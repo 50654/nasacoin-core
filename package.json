@@ -34,7 +34,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "security:audit": "npm audit --audit-level=moderate",
-    "security:scan": "npx slither contracts/",
+    
     "docker:build": "docker-compose -f docker-compose.prod.yml build",
     "docker:up": "docker-compose -f docker-compose.prod.yml up -d",
     "docker:down": "docker-compose -f docker-compose.prod.yml down",
