@@ -133,6 +133,34 @@ sudo -u postgres createdb nasacoin_prod
 sudo -u postgres psql -c "ALTER USER nasacoin PASSWORD 'secure_password';"
 ```
 
+### PoW-Wow Encrypted Tokens (Optional)
+
+NASA Coin API supports a lightweight proof-of-work gate for sensitive endpoints. You can enable stateless, AES-GCM–encrypted PoW tokens to avoid Redis lookups while preserving security.
+
+1) Enable PoW-Wow and set token mode in `production.env`:
+
+```bash
+POWWOW_ENABLED=true
+POWWOW_PROTECTED_PATHS=/api/nasacoin
+POWWOW_TOKEN_MODE=stateless
+POWWOW_TOKEN_TTL=120
+POWWOW_TOKEN_SECRET="change-this-to-a-long-random-string"
+# Optional: custom salt for key derivation (PBKDF2-SHA256)
+POWWOW_TOKEN_SALT=nasacoin-powwow-v1
+```
+
+2) Clients flow:
+
+- Request a challenge: `GET /api/pow/challenge?resource=/api/nasacoin`
+- Solve and mint token: `POST /api/pow/solve` with `{ challengeId, clientNonce }`
+- Include the returned token in requests via header `X-PoW-Token: <token>`
+
+3) Notes:
+
+- Set `POWWOW_TOKEN_MODE=redis` to revert to server-stored tokens.
+- Rotate `POWWOW_TOKEN_SECRET` carefully (overlap secrets during rotation if needed).
+- Tokens are bound to client IP and the protected resource prefix and expire after `POWWOW_TOKEN_TTL` seconds.
+
 ## 📊 Monitoring Setup
 
 ### Prometheus Configuration
