@@ -31,3 +31,7 @@ cd nasacoin-core
 ./configure
 make -j$(nproc)
 # nasacoin-core
+
+## 🛠️ VS Code Setup
+
+If you rely on the workspace tasks, install the Arm Virtual Hardware extension (`arm.virtual-hardware`). It registers the `virtual-hardware.run` task defined in `.vscode/tasks.json`; without it VS Code raises a "there is no registered task type" error.
