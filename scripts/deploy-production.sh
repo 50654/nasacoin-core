@@ -12,6 +12,63 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Trim leading and trailing whitespace from a string
+trim() {
+    local value="$1"
+    value="${value#"${value%%[![:space:]]*}"}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+# Load environment variables from a .env style file while preserving spaces
+load_env_file() {
+    local env_file="$1"
+
+    if [ ! -f "$env_file" ]; then
+        print_error "Environment file '$env_file' not found."
+        exit 1
+    fi
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        line="${line%$'\r'}"
+
+        # Skip empty lines and comments (allow leading whitespace)
+        if [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]]; then
+            continue
+        fi
+
+        if [[ "$line" != *=* ]]; then
+            print_warning "Skipping malformed line in $env_file: $line"
+            continue
+        fi
+
+        local key="${line%%=*}"
+        local value="${line#*=}"
+
+        key="$(trim "$key")"
+        value="$(trim "$value")"
+
+        if [[ -z "$key" ]]; then
+            print_warning "Skipping line with empty key in $env_file"
+            continue
+        fi
+
+        if ! [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+            print_warning "Skipping invalid environment key '$key' in $env_file"
+            continue
+        fi
+
+        # Remove surrounding quotes if present
+        if [[ ${#value} -ge 2 ]]; then
+            if [[ ( "${value:0:1}" == '"' && "${value: -1}" == '"' ) || ( "${value:0:1}" == "'" && "${value: -1}" == "'" ) ]]; then
+                value="${value:1:-1}"
+            fi
+        fi
+
+        export "${key}=${value}"
+    done < "$env_file"
+}
+
 # Function to print colored output
 print_status() {
     echo -e "${BLUE}[INFO]${NC} $1"
@@ -42,7 +99,7 @@ if [ ! -f "production.env" ]; then
 fi
 
 # Load environment variables
-export $(cat production.env | grep -v '^#' | xargs)
+load_env_file "production.env"
 
 print_status "Starting NASA Coin Production Deployment..."
 print_status "Environment: $NODE_ENV"
@@ -462,20 +519,20 @@ done
 # Display access information
 print_success "NASA Coin Production Deployment Complete!"
 echo ""
-echo "🌐 Access Information:"
+echo "?? Access Information:"
 echo "  Dashboard: https://localhost"
 echo "  API: http://localhost:8080"
 echo "  Prometheus: http://localhost:9090"
 echo "  Grafana: http://localhost:3000 (admin/password)"
 echo ""
-echo "📊 Monitoring:"
+echo "?? Monitoring:"
 echo "  Logs: docker-compose -f docker-compose.prod.yml logs -f"
 echo "  Status: docker-compose -f docker-compose.prod.yml ps"
 echo "  Health: curl http://localhost:8080/health"
 echo ""
-echo "🔧 Management:"
+echo "?? Management:"
 echo "  Stop: docker-compose -f docker-compose.prod.yml down"
 echo "  Restart: docker-compose -f docker-compose.prod.yml restart"
 echo "  Update: ./scripts/deploy-production.sh"
 echo ""
-echo "🚀 To the Moon and Beyond!"
+echo "?? To the Moon and Beyond!"
