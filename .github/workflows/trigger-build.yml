@@ -1,0 +1,21 @@
+name: Trigger Build Flow
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: Optional context for why the build is being triggered.
+        required: false
+        type: string
+  push:
+    paths:
+      - .trigger-build
+
+jobs:
+  trigger-build:
+    name: Run build workflow
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+    with:
+      # Provide a default description when not supplied via workflow_dispatch
+      trigger_reason: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.reason != '' && github.event.inputs.reason || format('Push update to {0}', github.ref_name) }}

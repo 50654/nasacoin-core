@@ -9,14 +9,25 @@ on:
   pull_request:
     branches:
       - main
+  workflow_call:
+    inputs:
+      trigger_reason:
+        required: false
+        type: string
 
 jobs:
   build-linux:
     runs-on: ubuntu-latest
+    env:
+      TRIGGER_REASON: ${{ github.event_name == 'workflow_call' && inputs.trigger_reason || '' }}
 
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v5
+
+      - name: 📝 Trigger context
+        if: ${{ env.TRIGGER_REASON != '' }}
+        run: echo "Triggered via reusable workflow: $TRIGGER_REASON"
 
       - name: ⚙️ Set up dependencies
         run: |
