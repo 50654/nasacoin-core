@@ -1,4 +1,15 @@
 // NASA Coin Wallet Integration Module
+
+// Import UI helpers if available
+if (typeof require !== 'undefined') {
+    try {
+        const { showToast } = require('./utils/ui-helpers');
+        var uiShowToast = showToast;
+    } catch (e) {
+        // Will use window.UIHelpers in browser
+    }
+}
+
 class WalletIntegration {
     constructor() {
         this.connectedWallet = null;
@@ -320,8 +331,12 @@ class WalletIntegration {
     }
 
     showToast(message, type = 'info') {
-        // Use the existing toast system from the main dashboard
-        if (window.nasaCoinDashboard) {
+        // Use the UIHelpers utility if available
+        if (typeof uiShowToast === 'function') {
+            uiShowToast(message, type);
+        } else if (window.UIHelpers) {
+            window.UIHelpers.showToast(message, type);
+        } else if (window.nasaCoinDashboard) {
             window.nasaCoinDashboard.showToast(message, type);
         } else {
             console.log(`${type.toUpperCase()}: ${message}`);

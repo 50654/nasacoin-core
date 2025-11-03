@@ -1,4 +1,16 @@
 // NASA Coin Analytics Dashboard Module
+
+// Import UI helpers if available
+if (typeof require !== 'undefined') {
+    try {
+        const { getChartOptions, updateElement } = require('./utils/ui-helpers');
+        var uiGetChartOptions = getChartOptions;
+        var uiUpdateElement = updateElement;
+    } catch (e) {
+        // Will use window.UIHelpers in browser
+    }
+}
+
 class AnalyticsDashboard {
     constructor() {
         this.charts = {};
@@ -213,6 +225,50 @@ class AnalyticsDashboard {
         });
     }
 
+    getChartOptionsWithCallback(callback) {
+        // Get base options and add custom callback
+        const options = typeof uiGetChartOptions === 'function' 
+            ? uiGetChartOptions() 
+            : (window.UIHelpers ? window.UIHelpers.getChartOptions() : this.getDefaultChartOptions());
+        
+        if (callback) {
+            options.scales.y.ticks.callback = callback;
+        }
+        return options;
+    }
+
+    getDefaultChartOptions() {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#b0b0b0'
+                    },
+                    grid: {
+                        color: '#333333'
+                    }
+                },
+                y: {
+                    ticks: {
+                        color: '#b0b0b0'
+                    },
+                    grid: {
+                        color: '#333333'
+                    }
+                }
+            }
+        };
+    }
+
     initializeCharts() {
         this.createHashRateChart();
         this.createDifficultyChart();
@@ -240,39 +296,10 @@ class AnalyticsDashboard {
                     tension: 0.4
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#ffffff'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#b0b0b0'
-                        },
-                        grid: {
-                            color: '#333333'
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            color: '#b0b0b0',
-                            callback: function(value) {
-                                return value >= 1e6 ? (value / 1e6).toFixed(1) + 'M' : 
-                                       value >= 1e3 ? (value / 1e3).toFixed(1) + 'K' : value;
-                            }
-                        },
-                        grid: {
-                            color: '#333333'
-                        }
-                    }
-                }
-            }
+            options: this.getChartOptionsWithCallback((value) => {
+                return value >= 1e6 ? (value / 1e6).toFixed(1) + 'M' : 
+                       value >= 1e3 ? (value / 1e3).toFixed(1) + 'K' : value;
+            })
         });
     }
 
@@ -293,35 +320,7 @@ class AnalyticsDashboard {
                     fill: true
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#ffffff'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#b0b0b0'
-                        },
-                        grid: {
-                            color: '#333333'
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            color: '#b0b0b0'
-                        },
-                        grid: {
-                            color: '#333333'
-                        }
-                    }
-                }
-            }
+            options: this.getChartOptionsWithCallback()
         });
     }
 
@@ -355,35 +354,7 @@ class AnalyticsDashboard {
                     borderWidth: 1
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#ffffff'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#b0b0b0'
-                        },
-                        grid: {
-                            color: '#333333'
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            color: '#b0b0b0'
-                        },
-                        grid: {
-                            color: '#333333'
-                        }
-                    }
-                }
-            }
+            options: this.getChartOptionsWithCallback()
         });
     }
 
@@ -441,38 +412,9 @@ class AnalyticsDashboard {
                     tension: 0.4
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#ffffff'
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        ticks: {
-                            color: '#b0b0b0'
-                        },
-                        grid: {
-                            color: '#333333'
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            color: '#b0b0b0',
-                            callback: function(value) {
-                                return '$' + value.toFixed(6);
-                            }
-                        },
-                        grid: {
-                            color: '#333333'
-                        }
-                    }
-                }
-            }
+            options: this.getChartOptionsWithCallback((value) => {
+                return '$' + value.toFixed(6);
+            })
         });
     }
 
@@ -681,9 +623,16 @@ class AnalyticsDashboard {
     }
 
     updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
+        // Use the UIHelpers utility if available
+        if (typeof uiUpdateElement === 'function') {
+            uiUpdateElement(id, value);
+        } else if (window.UIHelpers) {
+            window.UIHelpers.updateElement(id, value);
+        } else {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
         }
     }
 

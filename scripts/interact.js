@@ -1,6 +1,5 @@
 const { ethers } = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+const { loadDeploymentInfo, printNetworkInfo } = require("../utils/deployment-helpers");
 
 async function main() {
   console.log("🚀 NASA Coin Contract Interaction");
@@ -9,27 +8,20 @@ async function main() {
   const [deployer, user1, user2] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();
   
-  console.log(`📡 Network: ${network.name} (Chain ID: ${network.chainId})`);
   console.log(`👤 Deployer: ${deployer.address}`);
   console.log(`👤 User1: ${user1.address}`);
   console.log(`👤 User2: ${user2.address}`);
 
   // Load deployment info
-  const deploymentFile = path.join(__dirname, "..", "deployments", `${network.name}-${network.chainId}.json`);
-  
-  if (!fs.existsSync(deploymentFile)) {
-    console.error("❌ Deployment file not found. Please deploy the contract first.");
-    process.exit(1);
-  }
-
-  const deploymentInfo = JSON.parse(fs.readFileSync(deploymentFile, "utf8"));
+  const deploymentInfo = loadDeploymentInfo(network);
   const contractAddress = deploymentInfo.contractAddress;
+
+  // Print network and contract info
+  printNetworkInfo(network, contractAddress);
 
   // Connect to the deployed contract
   const NASACoin = await ethers.getContractFactory("NASACoin");
   const nasaCoin = NASACoin.attach(contractAddress);
-
-  console.log(`📍 Contract Address: ${contractAddress}`);
 
   // Display current contract state
   console.log("\n📊 Current Contract State:");

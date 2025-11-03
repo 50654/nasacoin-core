@@ -1,4 +1,18 @@
 // NASA Coin Staking & Pool Mining Module
+
+// Import UI helpers if available
+if (typeof require !== 'undefined') {
+    try {
+        const { showToast, updateElement, setupModalEventListeners, setModalWalletAddress } = require('./utils/ui-helpers');
+        var uiShowToast = showToast;
+        var uiUpdateElement = updateElement;
+        var uiSetupModalEventListeners = setupModalEventListeners;
+        var uiSetModalWalletAddress = setModalWalletAddress;
+    } catch (e) {
+        // Will use window.UIHelpers in browser
+    }
+}
+
 class StakingPool {
     constructor() {
         this.pools = [];
@@ -396,16 +410,16 @@ class StakingPool {
         
         // Event listeners
         modal.querySelector('.modal-close').addEventListener('click', () => {
-            document.body.removeChild(modal);
+            modal.remove();
         });
         
         modal.querySelector('#cancelCreatePool').addEventListener('click', () => {
-            document.body.removeChild(modal);
+            modal.remove();
         });
         
         modal.querySelector('#createPoolBtn').addEventListener('click', () => {
             this.createPool();
-            document.body.removeChild(modal);
+            modal.remove();
         });
     }
 
@@ -445,24 +459,35 @@ class StakingPool {
         
         document.body.appendChild(modal);
         
-        // Set wallet address if available
-        const walletAddress = document.getElementById('walletAddress');
-        if (window.nasaCoinDashboard && window.nasaCoinDashboard.currentAddress) {
-            walletAddress.value = window.nasaCoinDashboard.currentAddress;
+        // Set wallet address if available using helper
+        if (typeof uiSetModalWalletAddress === 'function') {
+            uiSetModalWalletAddress('walletAddress');
+        } else if (window.UIHelpers) {
+            window.UIHelpers.setModalWalletAddress('walletAddress');
+        } else {
+            const walletAddress = document.getElementById('walletAddress');
+            if (window.nasaCoinDashboard && window.nasaCoinDashboard.currentAddress) {
+                walletAddress.value = window.nasaCoinDashboard.currentAddress;
+            }
         }
         
-        // Event listeners
-        modal.querySelector('.modal-close').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-        
-        modal.querySelector('#cancelJoinPool').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
+        // Setup event listeners using helper
+        if (typeof uiSetupModalEventListeners === 'function') {
+            uiSetupModalEventListeners(modal, '.modal-close', '#cancelJoinPool');
+        } else if (window.UIHelpers) {
+            window.UIHelpers.setupModalEventListeners(modal, '.modal-close', '#cancelJoinPool');
+        } else {
+            modal.querySelector('.modal-close').addEventListener('click', () => {
+                modal.remove();
+            });
+            modal.querySelector('#cancelJoinPool').addEventListener('click', () => {
+                modal.remove();
+            });
+        }
         
         modal.querySelector('#joinPoolBtn').addEventListener('click', () => {
             this.joinPool();
-            document.body.removeChild(modal);
+            modal.remove();
         });
     }
 
@@ -511,24 +536,35 @@ class StakingPool {
         
         document.body.appendChild(modal);
         
-        // Set wallet address if available
-        const walletAddress = document.getElementById('walletAddress');
-        if (window.nasaCoinDashboard && window.nasaCoinDashboard.currentAddress) {
-            walletAddress.value = window.nasaCoinDashboard.currentAddress;
+        // Set wallet address if available using helper
+        if (typeof uiSetModalWalletAddress === 'function') {
+            uiSetModalWalletAddress('walletAddress');
+        } else if (window.UIHelpers) {
+            window.UIHelpers.setModalWalletAddress('walletAddress');
+        } else {
+            const walletAddress = document.getElementById('walletAddress');
+            if (window.nasaCoinDashboard && window.nasaCoinDashboard.currentAddress) {
+                walletAddress.value = window.nasaCoinDashboard.currentAddress;
+            }
         }
         
-        // Event listeners
-        modal.querySelector('.modal-close').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
-        
-        modal.querySelector('#cancelStake').addEventListener('click', () => {
-            document.body.removeChild(modal);
-        });
+        // Setup event listeners using helper
+        if (typeof uiSetupModalEventListeners === 'function') {
+            uiSetupModalEventListeners(modal, '.modal-close', '#cancelStake');
+        } else if (window.UIHelpers) {
+            window.UIHelpers.setupModalEventListeners(modal, '.modal-close', '#cancelStake');
+        } else {
+            modal.querySelector('.modal-close').addEventListener('click', () => {
+                modal.remove();
+            });
+            modal.querySelector('#cancelStake').addEventListener('click', () => {
+                modal.remove();
+            });
+        }
         
         modal.querySelector('#confirmStake').addEventListener('click', () => {
             this.stakeInPool(poolId);
-            document.body.removeChild(modal);
+            modal.remove();
         });
     }
 
@@ -716,14 +752,26 @@ Description: ${pool.description}
     }
 
     updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
+        // Use the UIHelpers utility if available
+        if (typeof uiUpdateElement === 'function') {
+            uiUpdateElement(id, value);
+        } else if (window.UIHelpers) {
+            window.UIHelpers.updateElement(id, value);
+        } else {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
         }
     }
 
     showToast(message, type = 'info') {
-        if (window.nasaCoinDashboard) {
+        // Use the UIHelpers utility if available
+        if (typeof uiShowToast === 'function') {
+            uiShowToast(message, type);
+        } else if (window.UIHelpers) {
+            window.UIHelpers.showToast(message, type);
+        } else if (window.nasaCoinDashboard) {
             window.nasaCoinDashboard.showToast(message, type);
         } else {
             console.log(`${type.toUpperCase()}: ${message}`);

@@ -1,26 +1,17 @@
 const { ethers } = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+const { loadDeploymentInfo, printNetworkInfo } = require("../utils/deployment-helpers");
 
 async function main() {
   console.log("🔍 NASA Coin Contract Verification");
   console.log("==================================");
 
   const network = await ethers.provider.getNetwork();
-  console.log(`📡 Network: ${network.name} (Chain ID: ${network.chainId})`);
 
   // Load deployment info
-  const deploymentFile = path.join(__dirname, "..", "deployments", `${network.name}-${network.chainId}.json`);
-  
-  if (!fs.existsSync(deploymentFile)) {
-    console.error("❌ Deployment file not found. Please deploy the contract first.");
-    process.exit(1);
-  }
-
-  const deploymentInfo = JSON.parse(fs.readFileSync(deploymentFile, "utf8"));
+  const deploymentInfo = loadDeploymentInfo(network);
   const contractAddress = deploymentInfo.contractAddress;
 
-  console.log(`📍 Contract Address: ${contractAddress}`);
+  printNetworkInfo(network, contractAddress);
   console.log("⏳ Starting verification...");
 
   try {

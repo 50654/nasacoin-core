@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { deployNASACoin } = require("./test-helpers");
 
 describe("NASACoin", function () {
   let nasaCoin;
@@ -9,13 +9,12 @@ describe("NASACoin", function () {
   let addrs;
 
   beforeEach(async function () {
-    // Get signers
-    [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
-
-    // Deploy contract
-    const NASACoin = await ethers.getContractFactory("NASACoin");
-    nasaCoin = await NASACoin.deploy();
-    await nasaCoin.waitForDeployment();
+    const deployment = await deployNASACoin();
+    nasaCoin = deployment.nasaCoin;
+    owner = deployment.owner;
+    addr1 = deployment.addr1;
+    addr2 = deployment.addr2;
+    addrs = deployment.addrs;
   });
 
   describe("Deployment", function () {

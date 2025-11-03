@@ -1,4 +1,16 @@
 // NASA Coin Portfolio Management Module
+
+// Import UI helpers if available
+if (typeof require !== 'undefined') {
+    try {
+        const { showToast, updateElement } = require('./utils/ui-helpers');
+        var uiShowToast = showToast;
+        var uiUpdateElement = updateElement;
+    } catch (e) {
+        // Will use window.UIHelpers in browser
+    }
+}
+
 class PortfolioManagement {
     constructor() {
         this.portfolio = {
@@ -750,14 +762,26 @@ class PortfolioManagement {
     }
 
     updateElement(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.textContent = value;
+        // Use the UIHelpers utility if available
+        if (typeof uiUpdateElement === 'function') {
+            uiUpdateElement(id, value);
+        } else if (window.UIHelpers) {
+            window.UIHelpers.updateElement(id, value);
+        } else {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
         }
     }
 
     showToast(message, type = 'info') {
-        if (window.nasaCoinDashboard) {
+        // Use the UIHelpers utility if available
+        if (typeof uiShowToast === 'function') {
+            uiShowToast(message, type);
+        } else if (window.UIHelpers) {
+            window.UIHelpers.showToast(message, type);
+        } else if (window.nasaCoinDashboard) {
             window.nasaCoinDashboard.showToast(message, type);
         } else {
             console.log(`${type.toUpperCase()}: ${message}`);
