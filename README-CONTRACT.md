@@ -107,6 +107,20 @@ npm run coverage
 REPORT_GAS=true npm test
 ```
 
+### Static Analysis
+
+```bash
+# Install Slither and solc (requires Python 3.11+)
+python3 -m pip install --user slither-analyzer
+python3 -m pip install --user solc-select
+export PATH="$HOME/.local/bin:$HOME/.solc-select/bin:$PATH"
+solc-select install 0.8.19
+solc-select use 0.8.19
+
+# Run the Solidity security scan
+npm run security:scan
+```
+
 ### Deployment
 
 #### Local Development
