@@ -21,42 +21,50 @@ module.exports = {
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 20000000000, // 20 gwei
     },
-    
+
     // Ethereum Sepolia Testnet
     sepolia: {
       url: process.env.SEPOLIA_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/your-api-key",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 10000000000, // 10 gwei
     },
-    
+
     // Polygon Mainnet
     polygon: {
       url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 30000000000, // 30 gwei
     },
-    
+
     // Polygon Mumbai Testnet
     mumbai: {
       url: process.env.MUMBAI_RPC_URL || "https://rpc-mumbai.maticvigil.com",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 10000000000, // 10 gwei
     },
-    
+
     // BSC Mainnet
     bsc: {
       url: process.env.BSC_RPC_URL || "https://bsc-dataseed1.binance.org",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 5000000000, // 5 gwei
     },
-    
+
     // BSC Testnet
     bscTestnet: {
       url: process.env.BSC_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.binance.org:8545",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
       gasPrice: 10000000000, // 10 gwei
     },
-    
+
+    // Avalanche C-Chain (Mainnet)
+    avalanche: {
+      url: process.env.AVALANCHE_RPC_URL || "https://api.avax.network/ext/bc/C/rpc",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      gasPrice: 25000000000, // 25 gwei
+      chainId: 43114,
+    },
+
     // Local Hardhat Network
     hardhat: {
       chainId: 31337,
@@ -74,7 +82,18 @@ module.exports = {
       polygonMumbai: process.env.POLYGONSCAN_API_KEY,
       bsc: process.env.BSCSCAN_API_KEY,
       bscTestnet: process.env.BSCSCAN_API_KEY,
-    }
+      avalanche: process.env.SNOWTRACE_API_KEY,
+    },
+    customChains: [
+      {
+        network: "avalanche",
+        chainId: 43114,
+        urls: {
+          apiURL: "https://api.snowtrace.io/api",
+          browserURL: "https://snowtrace.io",
+        },
+      },
+    ],
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,

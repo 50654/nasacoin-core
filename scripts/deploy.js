@@ -155,6 +155,8 @@ export const NASA_COIN_ABI = ${JSON.stringify(frontendConfig.abi, null, 2)};
       console.log(`   https://polygonscan.com/address/${nasaCoin.address}`);
     } else if (network.chainId === 80001) {
       console.log(`   https://mumbai.polygonscan.com/address/${nasaCoin.address}`);
+    } else if (network.chainId === 43114) {
+      console.log(`   https://snowtrace.io/address/${nasaCoin.address}`);
     } else if (network.chainId === 56) {
       console.log(`   https://bscscan.com/address/${nasaCoin.address}`);
     } else if (network.chainId === 97) {

@@ -46,6 +46,8 @@ async function main() {
     console.log(`   Polygonscan: https://polygonscan.com/address/${contractAddress}`);
   } else if (network.chainId === 80001) {
     console.log(`   Mumbai: https://mumbai.polygonscan.com/address/${contractAddress}`);
+  } else if (network.chainId === 43114) {
+    console.log(`   Snowtrace: https://snowtrace.io/address/${contractAddress}`);
   } else if (network.chainId === 56) {
     console.log(`   BSCScan: https://bscscan.com/address/${contractAddress}`);
   } else if (network.chainId === 97) {
