@@ -51,7 +51,7 @@
     "blockchain",
     "defi"
   ],
-  "author": "NASA Coin Team",
+  "author": "Wbaker7702",
   "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
