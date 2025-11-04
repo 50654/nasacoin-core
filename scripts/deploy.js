@@ -21,34 +21,72 @@ async function main() {
     console.log("⚠️  Warning: Low balance, deployment might fail");
   }
 
-  // Get the contract factory
-  console.log("\n📦 Compiling contracts...");
-  const NASACoin = await ethers.getContractFactory("NASACoin");
-  
-  // Estimate gas
-  const deploymentData = NASACoin.getDeployTransaction();
-  const estimatedGas = await ethers.provider.estimateGas(deploymentData);
-  const gasPrice = await ethers.provider.getGasPrice();
-  const deploymentCost = estimatedGas.mul(gasPrice);
-  
-  console.log(`⛽ Estimated gas: ${estimatedGas.toString()}`);
-  console.log(`💸 Estimated cost: ${ethers.utils.formatEther(deploymentCost)} ETH`);
-  
-  // Deploy the contract
-  console.log("\n🚀 Deploying NASA Coin contract...");
-  const nasaCoin = await NASACoin.deploy();
-  
-  console.log("⏳ Waiting for deployment confirmation...");
-  await nasaCoin.deployed();
-  
-  console.log("✅ NASA Coin deployed successfully!");
-  console.log(`📍 Contract address: ${nasaCoin.address}`);
-  console.log(`🔗 Transaction hash: ${nasaCoin.deployTransaction.hash}`);
-  
-  // Get deployment receipt
-  const receipt = await nasaCoin.deployTransaction.wait();
-  console.log(`⛽ Gas used: ${receipt.gasUsed.toString()}`);
-  console.log(`💰 Deployment cost: ${ethers.utils.formatEther(receipt.gasUsed.mul(receipt.effectiveGasPrice))} ETH`);
+    // Get the contract factory
+    console.log("\n📦 Compiling contracts...");
+    const NASACoin = await ethers.getContractFactory("NASACoin");
+
+    // Estimate gas for NASACoin deployment
+    const nasaCoinDeployTx = NASACoin.getDeployTransaction();
+    const currentGasPrice = await ethers.provider.getGasPrice();
+    const estimatedNasaCoinGas = await ethers.provider.estimateGas(nasaCoinDeployTx);
+    const nasaCoinDeploymentCost = estimatedNasaCoinGas.mul(currentGasPrice);
+
+    console.log(`⛽ Estimated gas (NASA Coin): ${estimatedNasaCoinGas.toString()}`);
+    console.log(`💸 Estimated cost (NASA Coin): ${ethers.utils.formatEther(nasaCoinDeploymentCost)} ETH`);
+
+    // Deploy NASACoin
+    console.log("\n🚀 Deploying NASA Coin contract...");
+    const nasaCoin = await NASACoin.deploy();
+
+    console.log("⏳ Waiting for NASA Coin deployment confirmation...");
+    await nasaCoin.deployed();
+
+    console.log("✅ NASA Coin deployed successfully!");
+    console.log(`📍 NASACoin address: ${nasaCoin.address}`);
+    console.log(`🔗 Transaction hash: ${nasaCoin.deployTransaction.hash}`);
+
+    const nasaCoinReceipt = await nasaCoin.deployTransaction.wait();
+    console.log(`⛽ Gas used (NASA Coin): ${nasaCoinReceipt.gasUsed.toString()}`);
+    console.log(`💰 Deployment cost (NASA Coin): ${ethers.utils.formatEther(nasaCoinReceipt.gasUsed.mul(nasaCoinReceipt.effectiveGasPrice))} ETH`);
+
+    // Deploy ProofOfStakeValidatorManager
+    const ProofOfStakeValidatorManager = await ethers.getContractFactory("ProofOfStakeValidatorManager");
+
+    const minStakeInput = process.env.VALIDATOR_MIN_STAKE || "1000";
+    const validatorMinStake = ethers.utils.parseUnits(minStakeInput, 18);
+    const validatorLockup = Number(process.env.VALIDATOR_LOCKUP_PERIOD || 7 * 24 * 60 * 60);
+    const validatorMaxCount = Number(process.env.VALIDATOR_MAX_VALIDATORS || 50);
+
+    console.log("\n🛠️ Validator Manager Configuration:");
+    console.log(`   Min Stake: ${minStakeInput} NASAPEPE`);
+    console.log(`   Lockup Period: ${validatorLockup} seconds`);
+    console.log(`   Max Validators: ${validatorMaxCount}`);
+
+    let validatorManager;
+    let validatorReceipt;
+
+    try {
+      validatorManager = await ProofOfStakeValidatorManager.deploy(
+        nasaCoin.address,
+        validatorMinStake,
+        validatorLockup,
+        validatorMaxCount
+      );
+
+      console.log("⏳ Waiting for Validator Manager deployment confirmation...");
+      await validatorManager.deployed();
+
+      console.log("✅ Validator Manager deployed successfully!");
+      console.log(`📍 Validator Manager address: ${validatorManager.address}`);
+      console.log(`🔗 Transaction hash: ${validatorManager.deployTransaction.hash}`);
+
+      validatorReceipt = await validatorManager.deployTransaction.wait();
+      console.log(`⛽ Gas used (Validator Manager): ${validatorReceipt.gasUsed.toString()}`);
+      console.log(`💰 Deployment cost (Validator Manager): ${ethers.utils.formatEther(validatorReceipt.gasUsed.mul(validatorReceipt.effectiveGasPrice))} ETH`);
+    } catch (error) {
+      console.error("❌ Validator Manager deployment failed", error);
+      throw error;
+    }
   
   // Verify contract details
   console.log("\n📊 Contract Details:");
@@ -67,15 +105,15 @@ async function main() {
   console.log(`   Block Reward: ${ethers.utils.formatEther(blockReward)} ${symbol}`);
   
   // Save deployment info
-  const deploymentInfo = {
+      const deploymentInfo = {
     network: network.name,
     chainId: network.chainId,
     contractAddress: nasaCoin.address,
     deployerAddress: deployer.address,
     transactionHash: nasaCoin.deployTransaction.hash,
-    blockNumber: receipt.blockNumber,
-    gasUsed: receipt.gasUsed.toString(),
-    deploymentCost: ethers.utils.formatEther(receipt.gasUsed.mul(receipt.effectiveGasPrice)),
+      blockNumber: nasaCoinReceipt.blockNumber,
+      gasUsed: nasaCoinReceipt.gasUsed.toString(),
+      deploymentCost: ethers.utils.formatEther(nasaCoinReceipt.gasUsed.mul(nasaCoinReceipt.effectiveGasPrice)),
     timestamp: new Date().toISOString(),
     contractDetails: {
       name,
@@ -84,7 +122,19 @@ async function main() {
       initialSupply: ethers.utils.formatEther(totalSupply),
       maxSupply: ethers.utils.formatEther(maxSupply),
       blockReward: ethers.utils.formatEther(blockReward)
-    }
+      },
+      validatorManager: {
+        address: validatorManager.address,
+        transactionHash: validatorManager.deployTransaction.hash,
+          blockNumber: validatorReceipt.blockNumber,
+          gasUsed: validatorReceipt.gasUsed.toString(),
+          deploymentCost: ethers.utils.formatEther(validatorReceipt.gasUsed.mul(validatorReceipt.effectiveGasPrice)),
+        configuration: {
+          minStake: minStakeInput,
+          lockupPeriodSeconds: validatorLockup,
+          maxValidators: validatorMaxCount
+        }
+      }
   };
   
   // Create deployments directory if it doesn't exist
@@ -100,20 +150,49 @@ async function main() {
   
   // Generate ABI file for frontend
   const artifactPath = path.join(__dirname, "..", "artifacts", "contracts", "NASACoin.sol", "NASACoin.json");
-  if (fs.existsSync(artifactPath)) {
-    const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
-    const abiFile = path.join(deploymentsDir, `NASACoin-ABI.json`);
-    fs.writeFileSync(abiFile, JSON.stringify(artifact.abi, null, 2));
-    console.log(`📄 ABI saved to: ${abiFile}`);
-  }
+    if (fs.existsSync(artifactPath)) {
+      const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
+      const abiFile = path.join(deploymentsDir, `NASACoin-ABI.json`);
+      fs.writeFileSync(abiFile, JSON.stringify(artifact.abi, null, 2));
+      console.log(`📄 NASACoin ABI saved to: ${abiFile}`);
+    }
+
+    const validatorArtifactPath = path.join(
+      __dirname,
+      "..",
+      "artifacts",
+      "contracts",
+      "ProofOfStakeValidatorManager.sol",
+      "ProofOfStakeValidatorManager.json"
+    );
+
+    if (fs.existsSync(validatorArtifactPath)) {
+      const validatorArtifact = JSON.parse(fs.readFileSync(validatorArtifactPath, "utf8"));
+      const validatorAbiFile = path.join(deploymentsDir, `ProofOfStakeValidatorManager-ABI.json`);
+      fs.writeFileSync(validatorAbiFile, JSON.stringify(validatorArtifact.abi, null, 2));
+      console.log(`📄 Validator Manager ABI saved to: ${validatorAbiFile}`);
+    }
   
   // Generate frontend config
-  const frontendConfig = {
-    contractAddress: nasaCoin.address,
-    chainId: network.chainId,
-    networkName: network.name,
-    abi: JSON.parse(fs.readFileSync(artifactPath, "utf8")).abi
-  };
+    const frontendConfig = {
+      nasaCoin: {
+        contractAddress: nasaCoin.address,
+        abi: JSON.parse(fs.readFileSync(artifactPath, "utf8")).abi
+      },
+      validatorManager: {
+        contractAddress: validatorManager.address,
+        abi: fs.existsSync(validatorArtifactPath)
+          ? JSON.parse(fs.readFileSync(validatorArtifactPath, "utf8")).abi
+          : []
+      },
+      chainId: network.chainId,
+      networkName: network.name,
+      validatorConfig: {
+        minStake: minStakeInput,
+        lockupPeriodSeconds: validatorLockup,
+        maxValidators: validatorMaxCount
+      }
+    };
   
   const configFile = path.join(__dirname, "..", "frontend-config.js");
   const configContent = `// NASA Coin Contract Configuration
@@ -121,8 +200,9 @@ async function main() {
 
 export const NASA_COIN_CONFIG = ${JSON.stringify(frontendConfig, null, 2)};
 
-// Contract ABI
-export const NASA_COIN_ABI = ${JSON.stringify(frontendConfig.abi, null, 2)};
+// Contract ABIs
+export const NASA_COIN_ABI = NASA_COIN_CONFIG.nasaCoin.abi;
+export const VALIDATOR_MANAGER_ABI = NASA_COIN_CONFIG.validatorManager.abi;
 `;
   
   fs.writeFileSync(configFile, configContent);

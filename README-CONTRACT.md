@@ -19,10 +19,16 @@ NASA Coin (NASAPEPE) is an ERC-20 token with a 5,000,000 max supply, burnable an
 - **Block Rewards**: Substantial rewards for successful miners
 
 ### Staking System
-- **Token Staking**: Stake tokens to earn rewards
+- **Token Staking**: Stake tokens directly in NASACoin to earn rewards
 - **Flexible APY**: Configurable annual percentage yield
 - **Compound Rewards**: Automatic reward compounding
-- **Instant Unstaking**: No lock-up periods
+- **Instant Unstaking**: No lock-up periods on the base staking contract
+
+### Proof-of-Stake Validator Management
+- **Dedicated Validator Manager**: `ProofOfStakeValidatorManager` coordinates validator lifecycle actions
+- **Configurable Parameters**: Owner can tune minimum stake, lock-up period, and maximum validator count
+- **Reward Funding Pipeline**: Supports dedicated reward pools, allocations, and validator self-claims
+- **Slashing Controls**: Owner-operated slashing with optional treasury redirection and validator state tracking
 
 ### Security Features
 - **ReentrancyGuard**: Protection against reentrancy attacks
@@ -42,6 +48,9 @@ NASA Coin (NASAPEPE) is an ERC-20 token with a 5,000,000 max supply, burnable an
 | **Block Reward** | 500,000 NASAPEPE |
 | **Default Staking APY** | 10% |
 | **Mining Cooldown** | 10 minutes |
+| **Validator Min Stake (default)** | 1,000 NASAPEPE |
+| **Validator Lockup (default)** | 7 days |
+| **Max Validators (default)** | 50 |
 
 ## 🚀 Quick Start
 
@@ -71,6 +80,9 @@ Required environment variables:
 - `ETHEREUM_RPC_URL`: Ethereum mainnet RPC endpoint
 - `SEPOLIA_RPC_URL`: Sepolia testnet RPC endpoint
 - `ETHERSCAN_API_KEY`: For contract verification
+- `VALIDATOR_MIN_STAKE` *(optional)*: Override default validator stake requirement (tokens, e.g. `2000`)
+- `VALIDATOR_LOCKUP_PERIOD` *(optional)*: Override exit lock-up period in seconds
+- `VALIDATOR_MAX_VALIDATORS` *(optional)*: Override maximum simultaneous validators
 
 ### Compilation
 
@@ -289,25 +301,28 @@ function emergencyWithdraw(address token, uint256 amount) external onlyOwner
 ### Project Structure
 ```
 contracts/
-├── NASACoin.sol          # Main token contract
+├── NASACoin.sol                       # Main token contract
+├── ProofOfStakeValidatorManager.sol   # Proof-of-stake validator manager
 scripts/
-├── deploy.js             # Deployment script
-├── verify.js             # Verification script
-├── interact.js           # Interaction examples
+├── deploy.js                          # Deploys token + validator manager
+├── verify.js                          # Verification script
+├── interact.js                        # Interaction examples
 test/
-├── NASACoin.test.js      # Comprehensive tests
+├── NASACoin.test.js                   # Token tests
+├── ProofOfStakeValidatorManager.test.js # Validator manager tests
 deployments/
-├── sepolia-11155111.json # Deployment info
-├── NASACoin-ABI.json     # Contract ABI
+├── sepolia-11155111.json              # Deployment info (per network)
+├── NASACoin-ABI.json                  # Token ABI export
+├── ProofOfStakeValidatorManager-ABI.json # Validator manager ABI export
 ```
 
 ### Adding New Features
 
-1. **Modify Contract**: Update `contracts/NASACoin.sol`
-2. **Add Tests**: Update `test/NASACoin.test.js`
-3. **Test Locally**: `npm test`
+1. **Modify Contracts**: Update `contracts/NASACoin.sol` or `contracts/ProofOfStakeValidatorManager.sol`
+2. **Add Tests**: Update or add relevant files in `test/`
+3. **Test Locally**: `npm test` (or target specific suites)
 4. **Deploy to Testnet**: `npm run deploy:sepolia`
-5. **Verify Contract**: `npm run verify:sepolia`
+5. **Verify Contracts**: `npm run verify:sepolia`
 
 ### Gas Optimization Tips
 
