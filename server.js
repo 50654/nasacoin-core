@@ -115,7 +115,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logging
 app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`, {
+  const sanitizedPath = req.path.replace(/[\r\n]/g, "");
+  logger.info(`${req.method} ${sanitizedPath}`, {
     ip: req.ip,
     userAgent: req.get('User-Agent'),
     timestamp: new Date().toISOString()
